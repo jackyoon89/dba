@@ -1,0 +1,46 @@
+#!/usr/bin/perl -w
+# 
+# check_database
+#
+# Jack Yoon    2011/06/25    Re-Written from old mon5m.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Cwd;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+my %STATUS = ( 'FAILED',  0,
+               'SUCCEED', 1 );
+
+
+main();
+
+sub main {
+    MonitorListener();
+}
+
+# -------------------------------------------------------------------------------
+# Name   : MonitorListener
+# Purpose: Monitor Listener and send alert if it is down.
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub MonitorListener {
+    my $subject = '';
+    my ( $error_code , $error_mesg ) = ('','');
+
+
+    my $database = Db::DATABASE->new();
+
+    ( $error_code , $error_mesg ) = $database->getListenerStatus();
+
+    if ( $error_code == $STATUS{'FAILED'} ) {    # Check listener status
+        $subject  = "Listener down! - ";
+        $subject .= Util::UTIL::getDateStr();
+
+        Util::UTIL::SendAlert ('TEXT', 'DBA', $subject , $error_mesg);
+    }
+    
+}

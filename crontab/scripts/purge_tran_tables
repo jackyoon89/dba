@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+# 
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use DBI;
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+main();
+
+sub main {
+
+        ArrangeTask();
+}
+
+
+
+sub ArrangeTask {
+
+    my @listDatabases = Db::CONFIG::getDbList();
+
+ 
+    foreach my $dbname ( @listDatabases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        # FXBRET was added by UAT-1229 
+        if ( $dbname !~ /FXDEMO|FXBETA|FXINT|FXDRET|FXBRET/ ) {
+            next;
+        } 
+
+        my $config = new Db::CONFIG( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+
+        if ( $dbname =~ /FXDRET/ ) {
+            # FXDRET - cx11 6 months
+           $_  = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/purge_tran_tables_cx11_6.sql" );
+        } else {
+           # FXDEMO|FXBETA|FXINT|FXBRET - cx11 3 months
+           $_  = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/purge_tran_tables_cx11.sql" );
+        }
+        $_  =~ s/deleted.\n/purged.<br>/g ;
+        $_  =~ s/WHITNEY/<br><br>WHITNEY/g;
+ 
+        my $subject = "Weekly Transactional Data Purge on $dbname - ( " . Util::UTIL::getDateStr() . ' ) ';
+
+
+        Util::UTIL::SendAlert ( 'HTML' , 'REPORTING' , $subject , $_);
+    }
+}
+
+
+
+
+

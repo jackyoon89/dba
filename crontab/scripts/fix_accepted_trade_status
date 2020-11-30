@@ -1,0 +1,59 @@
+#!/usr/bin/env perl
+# 
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use DBI;
+use Getopt::Long;
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+main();
+
+sub main {
+
+        ArrangeTask();
+}
+
+
+
+sub ArrangeTask {
+
+ 
+    foreach my $dbname ( Db::CONFIG::getDbList() ) {
+        
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $config = new Db::CONFIG( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+
+        eval {
+            @_ = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/fix_accepted_trade_status.sql $dbname" );
+
+
+	    ( $_ ) = grep { /rows/ } @_;
+
+            if ( !/^$|0 rows/ ) {
+                Util::UTIL::SendAlert ( 'TEXT', 'DBA' , "Trade discrepancies fixed.", $_);
+            } 
+        };
+      
+        if ( $@ ) {
+            print "An error occurred ($@), continuing\n";
+        }
+
+    }
+}
+
+
+
+
+

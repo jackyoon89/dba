@@ -1,0 +1,17 @@
+#!/bin/sh
+
+export MW_HOME=/home/app/oms/product/mdw
+export LD_LIBRARY_PATH=$MW_HOME/lib:$LD_LIBRARY_PATH
+export PATH=$MW_HOME/bin:$PATH
+
+OMS_OWNER=oms
+
+case "$1" in
+'start')
+    su $OMS_OWNER -c "$MW_HOME/bin/emctl start oms"
+    ;;
+'stop')
+    su $OMS_OWNER -c "$MW_HOME/bin/emctl stop oms -all -force"
+    ;;
+esac
+

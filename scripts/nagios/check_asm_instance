@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w 
+#
+# jyoon 11/17/2010 - Created
+#
+use strict;
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+
+use vars qw ( $opt_n );
+
+my $GREP   = "/bin/grep";
+my $AWK    = "/usr/bin/awk";
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	my $msg = '';
+        my $config = new Db::CONFIG('+ASM');
+	getopts('n:');
+
+	if ( !defined $opt_n ) {
+
+		print "ASM instance monitoring plugin.\n\n" .
+                      "This script provides health check of ASM(Automatic Storage Management) instance.\n\n" .
+		      "Usage : To monitor ASM instance: \n" .
+                      "        # check_asm_instance -n node_name\n\n";
+
+		return $ERRORS{'UNKNOWN'};
+	}
+
+	# Check CRS Processes
+        if ( $opt_n ) {
+
+            my $output = `$ENV{"ORACLE_HOME"}/bin/srvctl status asm -n $opt_n`;
+
+            print $output;
+
+            if ( $output =~ /running/ ) {
+                exit $ERRORS{'OK'};
+            } else {
+                exit $ERRORS{'CRITICAL'};
+            }
+        } 
+        exit $ERRORS{'UNKNOWN'};
+}
+
+

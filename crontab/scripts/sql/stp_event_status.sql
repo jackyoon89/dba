@@ -1,0 +1,30 @@
+set pagesize 500
+set line 180
+set verify off
+set heading off
+set feedback off
+
+
+SELECT '<TR>
+        <TD><FONT FACE="Arial" SIZE="2">'||TYPE||'</FONT></TD>
+        <TD><FONT FACE="Arial" SIZE="2">'||ENTITY_ID||'</FONT></TD>
+        <TD><FONT FACE="Arial" SIZE="2">'||LAST_DOWNLOAD||'</FONT></TD>
+        <TD><FONT FACE="Arial" SIZE="2">'||COUNT||'</FONT></TD>
+        </TR>'
+  FROM ( SELECT 'CLIENT' TYPE, C.CUSTOMER_ID ENTITY_ID, TO_CHAR(MAX(EVENT_DATE_TIME),'DD-MON-YYYY HH24:MI:SS') LAST_DOWNLOAD, COUNT(*) COUNT
+           FROM WHITNEY.CUSTOMER C, WHITNEY.STP_EVENT SE 
+          WHERE SE.PARTY_TYPE = 'CLIENT'
+            AND SE.DOWNLOAD_STATUS = 'ACTIVE' 
+            AND SE.PARTY_KEY = C.PARTY_KEY 
+          GROUP BY C.CUSTOMER_ID 
+          UNION 
+         SELECT 'BANK' TYPE, B.BANK_ID ENTITY_ID, TO_CHAR(MAX(EVENT_DATE_TIME),'DD-MON-YYYY HH24:MI:SS') LAST_DOWNLOAD, COUNT(*) COUNT
+           FROM WHITNEY.BANK B, WHITNEY.STP_EVENT SE 
+          WHERE SE.PARTY_TYPE != 'CLIENT' 
+            AND SE.DOWNLOAD_STATUS = 'ACTIVE' 
+            AND SE.PARTY_KEY = B.PARTY_KEY 
+          GROUP BY B.BANK_ID
+        ) ORDER BY TYPE,COUNT DESC
+/
+
+exit

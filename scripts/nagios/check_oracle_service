@@ -1,0 +1,81 @@
+#!/usr/bin/perl -w 
+#
+# jyoon 11/17/2010 - Created
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+use vars qw ( $opt_d $opt_s $opt_e );
+
+my $GREP   = "/bin/grep";
+my $AWK    = "/usr/bin/awk";
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+
+    getopts('d:s:e:');
+
+    if ( !((defined $opt_d && defined $opt_s) || (defined $opt_d && defined $opt_e)) || (defined $opt_s && defined $opt_e)) {
+
+        print "Oracle Service monitoring plugin.\n\n" .
+              "This script provides health check of the Oracle Service.\n\n" .
+	      "Usage : To monitor Service: \n" .
+              "        # check_oracle_service -d Database -s service_name\n" .
+              "        # check_oracle_service -d Database -e service_name\n\n";
+
+        return $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    my $config = new Db::CONFIG( uc $opt_d );
+    $config->setDbEnv();
+    #my $dbh    = new Db::DATABASE( uc $opt_d );
+
+    my $service_name = ''; 
+
+ 
+    if ( $opt_d && $opt_s ) {
+
+        $service_name = `$ENV{ORACLE_HOME}/bin/lsnrctl serv|/bin/grep Service|/bin/grep $opt_s`;
+        $service_name =~ s/.*\s\"(${opt_s})\"\s.*/$1/; 
+        chomp($service_name);
+
+         if ( $service_name eq $opt_s ) {
+             print "Service $opt_s is running - OK";
+             exit $ERRORS{'OK'};
+         } else {
+             print "Service $opt_s is down - CRITICAL";
+             exit $ERRORS{'CRITICAL'};
+         }
+    } elsif ( $opt_d && $opt_e ) {
+        $service_name = `$ENV{ORACLE_HOME}/bin/lsnrctl serv|/bin/grep Service|/bin/grep $opt_e`;
+        $service_name =~ s/.*\s\"(${opt_e})\"\s.*/$1/; 
+        chomp($service_name);
+
+        if ( $service_name eq $opt_e ) {
+             print "Service $opt_e is running - CRITICAL";
+             exit $ERRORS{'CRITICAL'};
+        } else {
+             print "Service $opt_e is down - OK";
+             exit $ERRORS{'OK'};
+        }
+    } 
+    exit $ERRORS{'UNKNOWN'};
+
+}
+
+

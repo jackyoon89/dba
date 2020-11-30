@@ -1,0 +1,22 @@
+run { 
+
+   sql "alter system archive log current";
+
+   backup archivelog all skip inaccessible tag 'LOG_TAG_NAME';
+
+   backup current controlfile tag 'CTRL_TAG_NAME';
+
+   delete archivelog until time 'sysdate -1';
+
+}
+
+
+crosscheck backupset;
+crosscheck archivelog all;
+crosscheck copy;
+
+delete noprompt expired copy;
+delete noprompt expired backupset;
+delete noprompt expired archivelog all;
+delete noprompt obsolete;
+

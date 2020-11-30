@@ -1,0 +1,333 @@
+
+                                                                                                                                                     
+                                                              All Underscore Parameters                                                              
+                                                                                                                                                     
+                                           Value   Value                                                                                             
+Underscore Parameter                       Session Instnc  Description                                                                               
+------------------------------------------ ------- ------- ---------------------------------------------------------------------------               
+_log_archive_avoid_memcpy                  TRUE    TRUE    log archive avoid memcpy                                                                  
+_log_archive_buffers                       10      10      Number of buffers to allocate for archiving                                               
+_log_archive_callout                                       archival callout                                                                          
+_log_archive_network_redo_size             10      10      Log archive network redo buffer size used by ARCH                                         
+_log_archive_prot_auto_demote              FALSE   FALSE   log archive protection auto demotion                                                      
+_log_archive_security_enabled              TRUE    TRUE    log archive security enabled                                                              
+_log_archive_strong_auth                   TRUE    TRUE    log archive security strong auth                                                          
+_log_archive_trace_pids                                    log archive trace pids parameter                                                          
+_log_blocks_during_backup                  TRUE    TRUE    log block images when changed during backup                                               
+_log_buffer_coalesce                       FALSE   FALSE   Coalescing log buffers for log writes                                                     
+_log_buffers_corrupt                       FALSE   FALSE   corrupt redo buffers before write                                                         
+_log_buffers_debug                         FALSE   FALSE   debug redo buffers (slows things down)                                                    
+_log_checkpoint_recovery_check             0       0       # redo blocks to verify after checkpoint                                                  
+_log_committime_block_cleanout             FALSE   FALSE   Log commit-time block cleanout                                                            
+_log_deletion_policy                       mandato mandato archivelog deletion policy for mandatory/all destination                                  
+                                           ry      ry                                                                                                
+                                                                                                                                                     
+_log_event_queues                          0       0       number of the log writer event queues                                                     
+_log_file_sync_timeout                     10      10      Log file sync timeout (centiseconds)                                                      
+_log_io_size                               0       0       automatically initiate log write if this many redo blocks in buffer                       
+_log_max_optimize_threads                  128     128     maximum number of threads to which log scan optimization is applied                       
+_log_parallelism_dynamic                   TRUE    TRUE    Enable dynamic strands                                                                    
+_log_parallelism_max                       2       2       Maximum number of log buffer strands                                                      
+_log_private_mul                           5       5       Private strand multiplier for log space preallocation                                     
+_log_private_parallelism_mul               10      10      Active sessions multiplier to deduce number of private strands                            
+_log_read_buffer_size                      8       8       buffer size for reading log files                                                         
+_log_read_buffers                          8       8       Number of log read buffers for media recovery                                             
+_log_simultaneous_copies                   16      16      number of simultaneous copies into redo buffer(# of copy latches)                         
+_log_space_errors                          TRUE    TRUE    should we report space errors to alert log                                                
+_log_switch_timeout                        0       0       Maximum number of seconds redos in the current log could span                             
+_logout_storm_rate                         0       0       number of processes that can logout in a second                                           
+_logout_storm_retrycnt                     600     600     maximum retry count for logouts                                                           
+_logout_storm_timeout                      5       5       timeout in centi-seconds for time to wait between retries                                 
+SQL> l
+  1  SELECT
+  2  a.ksppinm Param ,
+  3  b.ksppstvl SessionVal ,
+  4  c.ksppstvl InstanceVal,
+  5  a.ksppdesc Descr
+  6  FROM
+  7   x$ksppi a ,
+  8  x$ksppcv b ,
+  9  x$ksppsv c
+ 10  WHERE
+ 11  a.indx = b.indx AND
+ 12  a.indx = c.indx AND
+ 13  a.ksppinm LIKE '_log%'
+ 14* ORDER BY 1
+SQL> ed
+Wrote file afiedt.buf
+
+  1  SELECT
+  2  a.ksppinm Param ,
+  3  b.ksppstvl SessionVal ,
+  4  c.ksppstvl InstanceVal,
+  5  a.ksppdesc Descr
+  6  FROM
+  7   x$ksppi a ,
+  8  x$ksppcv b ,
+  9  x$ksppsv c
+ 10  WHERE
+ 11  a.indx = b.indx AND
+ 12  a.indx = c.indx AND
+ 13  a.ksppinm LIKE '_%cre%'
+ 14* ORDER BY 1
+SQL> /
+
+                                                                                                                                                     
+                                                              All Underscore Parameters                                                              
+                                                                                                                                                     
+                                           Value   Value                                                                                             
+Underscore Parameter                       Session Instnc  Description                                                                               
+------------------------------------------ ------- ------- ---------------------------------------------------------------------------               
+_allocate_creation_order                   FALSE   FALSE   should files be examined in creation order during allocation                              
+_asm_disable_smr_creation                  FALSE   FALSE   Do Not create smr                                                                         
+_cell_fast_file_create                     TRUE    TRUE    Allow optimized file creation path for Cells                                              
+_create_table_in_any_cluster               FALSE   FALSE   allow creation of table in a cluster not owned by the user                                
+_db_initial_cachesize_create_mb            256     256     size of cache created at startup                                                          
+_db_percpu_create_cachesize                2       2       size of cache created per cpu in deferred cache create                                    
+_db_todefer_cache_create                   TRUE    TRUE    buffer cache deferred create                                                              
+_disable_incremental_checkpoints           FALSE   FALSE   Disable incremental checkpoints for thread recovery                                       
+_disable_incremental_recovery_ckpt         FALSE   FALSE   Disable incremental recovery checkpoint mechanism                                         
+_discrete_transactions_enabled             FALSE   FALSE   enable OLTP mode                                                                          
+_file_size_increase_increment              6710886 6710886 Amount of file size increase increment, in bytes                                          
+                                           4       4                                                                                                 
+                                                                                                                                                     
+_ignore_edition_enabled_for_EV_creation    FALSE   FALSE   ignore schema's edition-enabled status during EV creation                                 
+_incremental_recovery_ckpt_min_batch       500     500     minimum number of writes for incremental recovery ckpt every second                       
+_oss_skgxp_udp_dynamic_credit_mgmt         1       1       OSSLIB enable[!0]/disable[0] dynamic credit mgmt for SKGXP-UDP                            
+_skgxp_udp_enable_dynamic_credit_mgmt      0       0       Enables dynamic credit management                                                         
+_xsolapi_dimension_group_creation          OVERFET OVERFET OLAP API symmetric overfetch                                                              
+                                           CH      CH                                                                                                
+                                                                                                                                                     
+db_create_file_dest                        +DG1    +DG1    default database location                                                                 
+db_create_online_log_dest_1                +DG1    +DG1    online log/controlfile destination #1                                                     
+db_create_online_log_dest_2                                online log/controlfile destination #2                                                     
+db_create_online_log_dest_3                                online log/controlfile destination #3                                                     
+db_create_online_log_dest_4                                online log/controlfile destination #4                                                     
+db_create_online_log_dest_5                                online log/controlfile  destination #5                                                    
+deferred_segment_creation                  TRUE    TRUE    defer segment creation to first insert                                                    
+SQL> ed
+Wrote file afiedt.buf
+
+  1  SELECT
+  2  a.ksppinm Param ,
+  3  b.ksppstvl SessionVal ,
+  4  c.ksppstvl InstanceVal,
+  5  a.ksppdesc Descr
+  6  FROM
+  7   x$ksppi a ,
+  8  x$ksppcv b ,
+  9  x$ksppsv c
+ 10  WHERE
+ 11  a.indx = b.indx AND
+ 12  a.indx = c.indx AND
+ 13  a.ksppinm LIKE '_%log%'
+ 14* ORDER BY 1
+SQL> /
+
+                                                                                                                                                     
+                                                              All Underscore Parameters                                                              
+                                                                                                                                                     
+                                           Value   Value                                                                                             
+Underscore Parameter                       Session Instnc  Description                                                                               
+------------------------------------------ ------- ------- ---------------------------------------------------------------------------               
+_adaptive_log_file_sync_high_switch_freq_t 3       3       Threshold for frequent log file sync mode switches (per minute)                           
+hreshold                                                                                                                                             
+                                                                                                                                                     
+_adaptive_log_file_sync_poll_aggressivenes 0       0       Polling interval selection bias (conservative=0, aggressive=100)                          
+s                                                                                                                                                    
+                                                                                                                                                     
+_adaptive_log_file_sync_sched_delay_window 60      60      Window (in seconds) for measuring average scheduling delay                                
+_adaptive_log_file_sync_use_polling_thresh 200     200     Ratio of redo synch time to expected poll time as a percentage                            
+old                                                                                                                                                  
+                                                                                                                                                     
+_adaptive_log_file_sync_use_postwait_thres 50      50      Percentage of foreground load from when post/wait was last used                           
+hold                                                                                                                                                 
+                                                                                                                                                     
+_allow_resetlogs_corruption                FALSE   FALSE   allow resetlogs even if it will cause corruption                                          
+_asm_log_scale_rebalance                   FALSE   FALSE   Rebalance power uses logarithmic scale                                                    
+_build_deferred_mv_skipping_mvlog_update   TRUE    TRUE    DEFERRED MV creation skipping MV log setup update                                         
+_case_sensitive_logon                      TRUE    TRUE    case sensitive logon enabled                                                              
+_cr_server_log_flush                       TRUE    TRUE    if TRUE, flush redo log before serving a CR buffer                                        
+_db_flashback_log_min_size                 1677721 1677721 Minimum flashback database log size in bytes                                              
+                                           6       6                                                                                                 
+                                                                                                                                                     
+_db_flashback_log_min_total_space          0       0       Minimum flashback database log total space in bytes                                       
+_defer_log_boundary_ckpt                   TRUE    TRUE    defer media recovery checkpoint at log boundary                                           
+_defer_log_count                           2       2       Number of log boundaries media recovery checkpoint lags behind                            
+_deferred_log_dest_is_valid                TRUE    TRUE    consider deferred log dest as valid for log deletion (TRUE/FALSE)                         
+_deq_log_array_size                        10000   10000   deq log array size                                                                        
+_dg_corrupt_redo_log                       0       0       Corrupt redo log validation during archivals                                              
+_disable_logging                           FALSE   FALSE   Disable logging                                                                           
+_drop_flashback_logical_operations_enq     FALSE   FALSE   Drop logical operations enqueue immediately during flashback marker generat               
+                                                           ion                                                                                       
+                                                                                                                                                     
+_enable_flash_logging                      TRUE    TRUE    Enable Exadata Smart Flash Logging                                                        
+_external_scn_logging_threshold_seconds    172800  172800  High delta SCN threshold in seconds                                                       
+_fg_log_checksum                           TRUE    TRUE    Checksum redo in foreground process                                                       
+_flashback_allow_noarchivelog              FALSE   FALSE   Allow enabling flashback on noarchivelog database                                         
+_flashback_log_io_error_behavior           0       0       Specify Flashback log I/O error behavior                                                  
+_flashback_log_min_size                    100     100     Minimum flashback log size                                                                
+_flashback_log_rac_balance_factor          10      10      flashback log rac balance factor                                                          
+_flashback_log_size                        1000    1000    Flashback log size                                                                        
+_flashback_logfile_enqueue_timeout         600     600     flashback logfile enqueue timeout for opens                                               
+_flashback_max_log_size                    0       0       Maximum flashback log size in bytes (OS limit)                                            
+_flashback_max_n_log_per_thread            2048    2048    Maximum number of flashback logs per flashback thread                                     
+_flashback_n_log_per_thread                128     128     Desired number of flashback logs per flashback thread                                     
+_flashback_prepare_log                     TRUE    TRUE    Prepare Flashback logs in the background                                                  
+_gc_log_flush                              TRUE    TRUE    if TRUE, flush redo log before a current block transfer                                   
+_hang_log_incidents                        FALSE   FALSE   Hang Manager incident logging                                                             
+_kcl_conservative_log_flush                FALSE   FALSE   if TRUE, conservatively log flush before CR serving                                       
+_log_archive_avoid_memcpy                  TRUE    TRUE    log archive avoid memcpy                                                                  
+_log_archive_buffers                       10      10      Number of buffers to allocate for archiving                                               
+_log_archive_callout                                       archival callout                                                                          
+_log_archive_network_redo_size             10      10      Log archive network redo buffer size used by ARCH                                         
+_log_archive_prot_auto_demote              FALSE   FALSE   log archive protection auto demotion                                                      
+_log_archive_security_enabled              TRUE    TRUE    log archive security enabled                                                              
+_log_archive_strong_auth                   TRUE    TRUE    log archive security strong auth                                                          
+_log_archive_trace_pids                                    log archive trace pids parameter                                                          
+_log_blocks_during_backup                  TRUE    TRUE    log block images when changed during backup                                               
+_log_buffer_coalesce                       FALSE   FALSE   Coalescing log buffers for log writes                                                     
+_log_buffers_corrupt                       FALSE   FALSE   corrupt redo buffers before write                                                         
+_log_buffers_debug                         FALSE   FALSE   debug redo buffers (slows things down)                                                    
+_log_checkpoint_recovery_check             0       0       # redo blocks to verify after checkpoint                                                  
+_log_committime_block_cleanout             FALSE   FALSE   Log commit-time block cleanout                                                            
+_log_deletion_policy                       mandato mandato archivelog deletion policy for mandatory/all destination                                  
+                                           ry      ry                                                                                                
+                                                                                                                                                     
+_log_event_queues                          0       0       number of the log writer event queues                                                     
+_log_file_sync_timeout                     10      10      Log file sync timeout (centiseconds)                                                      
+_log_io_size                               0       0       automatically initiate log write if this many redo blocks in buffer                       
+_log_max_optimize_threads                  128     128     maximum number of threads to which log scan optimization is applied                       
+_log_parallelism_dynamic                   TRUE    TRUE    Enable dynamic strands                                                                    
+_log_parallelism_max                       2       2       Maximum number of log buffer strands                                                      
+_log_private_mul                           5       5       Private strand multiplier for log space preallocation                                     
+_log_private_parallelism_mul               10      10      Active sessions multiplier to deduce number of private strands                            
+_log_read_buffer_size                      8       8       buffer size for reading log files                                                         
+_log_read_buffers                          8       8       Number of log read buffers for media recovery                                             
+_log_simultaneous_copies                   16      16      number of simultaneous copies into redo buffer(# of copy latches)                         
+_log_space_errors                          TRUE    TRUE    should we report space errors to alert log                                                
+_log_switch_timeout                        0       0       Maximum number of seconds redos in the current log could span                             
+_logout_storm_rate                         0       0       number of processes that can logout in a second                                           
+_logout_storm_retrycnt                     600     600     maximum retry count for logouts                                                           
+_logout_storm_timeout                      5       5       timeout in centi-seconds for time to wait between retries                                 
+_long_log_write_warning_threshold          500     500     threshold for long log write warning messages in ms                                       
+_memory_broker_log_stat_entries            5       5       memory broker num stat entries                                                            
+_no_recovery_through_resetlogs             FALSE   FALSE   no recovery through this resetlogs operation                                              
+_olap_allocate_errorlog_format             %8p %8y %8p %8y OLAP Allocate Errorlog Format                                                             
+                                            %8z %e  %8z %e                                                                                           
+                                            (%n)    (%n)                                                                                             
+                                                                                                                                                     
+_olap_allocate_errorlog_header             Dim     Dim     OLAP Allocate Errorlog Header format                                                      
+                                             Sourc   Sourc                                                                                           
+                                           e   Bas e   Bas                                                                                           
+                                           is      is                                                                                                
+                                           %-8d %- %-8d %-                                                                                           
+                                           8s %-8b 8s %-8b                                                                                           
+                                            Descri  Descri                                                                                           
+                                           ption   ption                                                                                             
+                                           ------- -------                                                                                           
+                                           - ----- - -----                                                                                           
+                                           --- --- --- ---                                                                                           
+                                           ----- - ----- -                                                                                           
+                                           ------- -------                                                                                           
+                                           ---     ---                                                                                               
+                                                                                                                                                     
+_olap_dbgoutfile_echo_to_eventlog          FALSE   FALSE   OLAP DbgOutfile copy output to event log (tracefile)                                      
+_reduce_sby_log_scan                       TRUE    TRUE    enable standby log scan optimization                                                      
+_smm_advice_log_size                       0       0       overwrites default size of the PGA advice workarea history log                            
+_switchover_to_standby_switch_log          TRUE    TRUE    Switchover to standby switches log for open redo threads                                  
+_ta_lns_wait_for_arch_log                  20      20      LNS Wait time for arhcived version of online log                                          
+_transient_logical_clear_hold_mrp_bit      FALSE   FALSE   clear KCCDI2HMRP flag during standby recovery                                             
+_use_adaptive_log_file_sync                TRUE    TRUE    Adaptively switch between post/wait and polling                                           
+_verify_fg_log_checksum                    FALSE   FALSE   LGWR verifies redo checksums generated by foreground processes                            
+_xpl_peeked_binds_log_size                 8192    8192    maximum bytes for logging peeked bind values for V$SQL_PLAN (0 = OFF)                     
+audit_syslog_level                                         Syslog facility and level                                                                 
+commit_logging                                             transaction commit log write behaviour                                                    
+db_create_online_log_dest_1                +DG1    +DG1    online log/controlfile destination #1                                                     
+db_create_online_log_dest_2                                online log/controlfile destination #2                                                     
+db_create_online_log_dest_3                                online log/controlfile destination #3                                                     
+db_create_online_log_dest_4                                online log/controlfile destination #4                                                     
+db_create_online_log_dest_5                                online log/controlfile  destination #5                                                    
+enable_ddl_logging                         FALSE   FALSE   enable ddl logging                                                                        
+remote_login_passwordfile                  EXCLUSI EXCLUSI password file usage parameter                                                             
+                                           VE      VE                                                                                                
+                                                                                                                                                     
+sec_case_sensitive_logon                   TRUE    TRUE    case sensitive password enabled for logon                                                 
+sec_max_failed_login_attempts              10      10      maximum number of failed login attempts on a connection                                   
+SQL> ed
+Wrote file afiedt.buf
+
+  1  SELECT
+  2  a.ksppinm Param ,
+  3  b.ksppstvl SessionVal ,
+  4  c.ksppstvl InstanceVal,
+  5  a.ksppdesc Descr
+  6  FROM
+  7   x$ksppi a ,
+  8  x$ksppcv b ,
+  9  x$ksppsv c
+ 10  WHERE
+ 11  a.indx = b.indx AND
+ 12  a.indx = c.indx AND
+ 13  a.ksppinm LIKE '_%reco%'
+ 14* ORDER BY 1
+SQL> /
+
+                                                                                                                                                     
+                                                              All Underscore Parameters                                                              
+                                                                                                                                                     
+                                           Value   Value                                                                                             
+Underscore Parameter                       Session Instnc  Description                                                                               
+------------------------------------------ ------- ------- ---------------------------------------------------------------------------               
+_abort_recovery_on_join                    FALSE   FALSE   if TRUE, abort recovery on join reconfigurations                                          
+_active_standby_fast_reconfiguration       TRUE    TRUE    if TRUE optimize dlm reconfiguration for active/standby OPS                               
+_allow_terminal_recovery_corruption        FALSE   FALSE   Finish terminal recovery even if it may cause corruption                                  
+_async_recovery_claims                     TRUE    TRUE    if TRUE, issue recovery claims asynchronously                                             
+_async_recovery_reads                      TRUE    TRUE    if TRUE, issue recovery reads asynchronously                                              
+_cgs_health_check_in_reconfig              TRUE    TRUE    CGS health check during reconfiguration                                                   
+_cgs_reconfig_extra_wait                   3       3       CGS reconfiguration extra wait time for CSS in seconds                                    
+_cgs_reconfig_timeout                      0       0       CGS reconfiguration timeout interval                                                      
+_db_block_corruption_recovery_threshold    5       5       threshold number of block recovery attempts                                               
+_db_recovery_temporal_file_dest                            default database recovery temporal file location                                          
+_disable_incremental_recovery_ckpt         FALSE   FALSE   Disable incremental recovery checkpoint mechanism                                         
+_disable_recovery_read_skip                FALSE   FALSE   Disable the read optimization during media recovery                                       
+_distributed_recovery_connection_hold_time 200     200     number of seconds RECO holds outbound connections open                                    
+_enable_block_level_transaction_recovery   TRUE    TRUE    enable block level recovery                                                               
+_flush_undo_after_tx_recovery              TRUE    TRUE    if TRUE, flush undo buffers after TX recovery                                             
+_gc_coalesce_recovery_reads                TRUE    TRUE    if TRUE, coalesce recovery reads                                                          
+_gc_keep_recovery_buffers                  TRUE    TRUE    if TRUE, make single instance crash recovery buffers current                              
+_gcs_fast_reconfig                         TRUE    TRUE    if TRUE, enable fast reconfiguration for gcs locks                                        
+_gcs_process_in_recovery                   TRUE    TRUE    if TRUE, process gcs requests during instance recovery                                    
+_imr_extra_reconfig_wait                   10      10      Extra reconfiguration wait in seconds                                                     
+_imr_max_reconfig_delay                    75      75      Maximum Reconfiguration delay (seconds)                                                   
+_incremental_recovery_ckpt_min_batch       500     500     minimum number of writes for incremental recovery ckpt every second                       
+_kse_snap_ring_record_stack                FALSE   FALSE   should error snap ring entries show a short stack trace                                   
+_latch_recovery_alignment                  65534   65534   align latch recovery structures                                                           
+_log_checkpoint_recovery_check             0       0       # redo blocks to verify after checkpoint                                                  
+_media_recovery_read_batch                 32      32      media recovery block read batch                                                           
+_multiple_instance_recovery                FALSE   FALSE   use multiple instances for media recovery                                                 
+_no_recovery_through_resetlogs             FALSE   FALSE   no recovery through this resetlogs operation                                              
+_olap_adv_comp_stats_cc_precomp            20      20      do additional predicate stats analysis for AW rowsource                                   
+_parallel_recovery_stopat                  32767   32767   stop at -position- to step through SMON                                                   
+_precompute_gid_values                     TRUE    TRUE    precompute gid values and copy them before returning a row                                
+_recoverable_recovery_batch_percent        50      50      Recoverable recovery batch size (percentage of buffer cache)                              
+_recovery_asserts                          FALSE   FALSE   if TRUE, enable expensive integrity checks                                                
+_recovery_percentage                       50      50      recovery buffer cache percentage                                                          
+_recovery_read_limit                       1024    1024    number of recovery reads which can be outstanding                                         
+_recovery_skip_cfseq_check                 FALSE   FALSE   allow media recovery even if controlfile seq check fails                                  
+_recovery_verify_writes                    FALSE   FALSE   enable thread recovery write verify                                                       
+_serial_recovery                           FALSE   FALSE   force serial recovery or parallel recovery                                                
+_set_mgd_recovery_state                    0       0       set mgd recovery state to new value                                                       
+_show_mgd_recovery_state                   FALSE   FALSE   Show internal managed recovery state                                                      
+_transaction_recovery_servers              0       0       max number of parallel recovery slaves that may be used                                   
+_xsolapi_precompute_subquery               TRUE    TRUE    OLAP API precomputes subqueries?                                                          
+control_file_record_keep_time              7       7       control file record keep time in days                                                     
+db_recovery_file_dest                      /oracle /oracle default database recovery file location                                                   
+                                           /recove /recove                                                                                           
+                                           ry_area ry_area                                                                                           
+                                                                                                                                                     
+db_recovery_file_dest_size                 1073741 1073741 database recovery files size limit                                                        
+                                           82400   82400                                                                                             
+                                                                                                                                                     
+db_unrecoverable_scn_tracking              TRUE    TRUE    Track nologging SCN in controlfile                                                        
+SQL> exit

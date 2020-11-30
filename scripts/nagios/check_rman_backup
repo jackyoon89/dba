@@ -1,0 +1,82 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::DATABASE;
+
+
+
+use vars qw ( $opt_d $opt_t $opt_n );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	
+    getopts('d:t:n:');
+
+    if (!defined $opt_d || !defined $opt_t || !defined $opt_n){
+		
+        print "Rman backup check plugin.\n\n";
+       	print "Usage : check_rman_backup -d DB_NAME -t (Backup Type(DB FULL|ARCHIVELOG)) -n (number of days)\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    my ($days_after_backup, $last_backup_time) = split(",", check_last_backup( $opt_d , $opt_t ));
+
+
+    if ( $days_after_backup =~ /^$/ ) {
+       print "CRITICAL - No backup found!";
+       exit $ERRORS{'CRITICAL'};
+    }
+  
+    $opt_t = uc $opt_t;
+    print "$opt_t Backup was done on $last_backup_time($days_after_backup days ago).";
+
+    if ( $days_after_backup > $opt_n ) {
+        print "CRITICAL";
+        exit $ERRORS{'CRITICAL'};
+    } 
+
+}
+
+
+sub check_last_backup{
+
+    my ($database, $backup_type, $result) = ( @_, '' );
+
+    my $config = new Db::CONFIG ( $database );
+
+    # Status check deferred because it's a standby database
+    #
+    if ( $config->isStandby() =~ /yes/i ) {
+        print "Standby Database - Status Check deferred.";
+        exit $ERRORS{'OK'};
+    }
+    
+    my $dh = new Db::DATABASE( $database );
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/check_rman_backup.sql \"$backup_type\"" );
+    @_ = split ('\n', $_ );
+
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        $_ =~ s/^\s+//g;
+        $result = $_;
+    }
+    return $result;
+}
+

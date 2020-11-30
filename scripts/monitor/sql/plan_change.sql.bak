@@ -1,0 +1,52 @@
+set serverout on
+set line 250
+
+declare
+    counter number := 0;
+begin
+<<outer>>
+    for i in (SELECT h.sql_id, ROUND(avg(h.elapsed_time_total / h.executions_total / 1e6), 2) average, ROUND(stddev(h.elapsed_time_total / h.executions_total / 1e6), 2) elapsed_stddev
+                FROM dba_hist_sqlstat h,
+                     dba_hist_snapshot s
+               WHERE h.executions_total > 0
+                 AND h.plan_hash_value <> 0
+                 AND s.BEGIN_INTERVAL_TIME > sysdate - 7
+                 AND s.snap_id = h.snap_id
+                 AND s.dbid = h.dbid
+                 AND s.instance_number = h.instance_number
+               GROUP BY h.sql_id
+               ORDER BY 3 desc,2 desc)
+    loop
+        --dbms_output.put_line('sql_id: '||i.sql_id||' average : '||i.average||' Stddev : ' ||i.elapsed_stddev);
+        for j in ( SELECT h.plan_hash_value,
+                          h.executions_total,
+                          TO_CHAR(ROUND(h.rows_processed_total / h.executions_total), '999,999,999,999') rows_per_exec,
+                          TO_CHAR(ROUND(h.elapsed_time_total / h.executions_total / 1e6, 3), '999,990.000') et_secs_per_exec,
+                          TO_CHAR(ROUND(h.cpu_time_total / h.executions_total / 1e6, 3), '999,990.000') cpu_secs_per_exec,
+                          TO_CHAR(ROUND(h.iowait_total / h.executions_total / 1e6, 3), '999,990.000') io_secs_per_exec,
+                          TO_CHAR(ROUND(h.clwait_total / h.executions_total / 1e6, 3), '999,990.000') cl_secs_per_exec,
+                          TO_CHAR(ROUND(h.apwait_total / h.executions_total / 1e6, 3), '999,990.000') ap_secs_per_exec,
+                          TO_CHAR(ROUND(h.ccwait_total / h.executions_total / 1e6, 3), '999,990.000') cc_secs_per_exec,
+                          TO_CHAR(ROUND(h.plsexec_time_total / h.executions_total / 1e6, 3), '999,990.000') pl_secs_per_exec,
+                          TO_CHAR(ROUND(h.javexec_time_total / h.executions_total / 1e6, 3), '999,990.000') ja_secs_per_exec
+                     FROM dba_hist_sqlstat h,
+                          dba_hist_snapshot s
+                    WHERE h.sql_id = i.sql_id
+                      AND s.BEGIN_INTERVAL_TIME > sysdate - 1/24
+                      AND ROUND(h.elapsed_time_total / h.executions_total / 1e6, 2) >= (i.average + i.elapsed_stddev)
+                      AND h.executions_total > 0
+                      AND s.snap_id = h.snap_id
+                      AND s.dbid = h.dbid
+                      AND s.instance_number = h.instance_number
+                    ORDER BY 4)
+        loop
+            if counter >= 10 then
+                exit;
+            end if;
+
+            counter := counter + 1; 
+            dbms_output.put_line('sql_id : '||i.sql_id||' sql_hash_value : '||j.plan_hash_value||' elapsed_time_per_exe : '||j.et_secs_per_exec);
+        end loop;
+    end loop outer;
+end;
+/

@@ -1,0 +1,52 @@
+#!/usr/bin/env perl 
+#
+# Jack Yoon    2011/07/07    Re-Written from old mon1d.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Cwd;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $fileSize='102400k';
+my $payload = '';
+my $subject = '';
+
+my $FIND = "/usr/bin/find";
+my $XARGS = "/usr/bin/xargs";
+my $LS    = "/bin/ls";
+my $AWK   = "/bin/awk";
+my $GREP  = "/bin/grep";
+my $SORT  = "/bin/sort";
+
+main();
+
+sub main {
+
+    get_new_trace_files();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : get_new_trace_files
+# Purpose: Check if there are any new trace files and send email if any
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub get_new_trace_files {
+
+    my $logDate   = substr(Util::UTIL::getDateStr(), 0 , 10 );
+
+
+    my $listFiles = `$FIND /home/app/oracle/diag -ctime -1 -regex \".*\\(.trc\\|.trm\\|.aud\\|.xml\\)\"`;
+
+    if ( $listFiles ) {
+
+        my $subject = "New Trace files were generated - $logDate";
+
+        Util::UTIL::SendAlert ( 'TEXT', 'DBA' , $subject , $listFiles );
+    }
+}
+

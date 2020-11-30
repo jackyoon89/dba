@@ -1,0 +1,24 @@
+#!/bin/bash
+# db_permcheck 10/1/08 Colin Jenkins (cjenkins@currenex.com)
+#
+# $Header$
+#
+# Check oracle db files for world writability and send warning.
+#
+PATH=/bin:/usr/bin:
+PATHS='/oracle'
+OK_STATE=0
+WARN_STATE=1
+CRIT_STATE=2
+UNKN_STATE=3
+
+FILES=`find $PATHS \( -type f -o -type d \) -perm -002 -ls`
+
+if [ "$FILES" ] ; then
+        echo "Critical: World writable files found on `hostname` $FILES"
+        exit $CRIT_STATE
+fi
+
+echo "OK: No world writable files on `hostname`"
+exit $OK_STATE
+

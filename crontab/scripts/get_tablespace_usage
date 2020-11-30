@@ -1,0 +1,64 @@
+#!/usr/bin/env perl 
+#
+# Jack Yoon    2011/07/07    Re-Written from old mon1d.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+my $SPACE_WARNING_HWM = 90;
+
+my %STATUS = ( 'FAILED',  0, 'SUCCEED', 1 );
+
+
+
+main();
+
+sub main {
+
+    tablespace_usage();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : tablespace_usage
+# Purpose: Check tablespace usage
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub tablespace_usage {
+
+    my ($error_num , $error_mesg ) = ( '','' );
+    my @databases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $config = new Db::CONFIG   ( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh     = new Db::DATABASE ( $dbname );
+
+        # 2010/03/19
+        # Merge several individual database call function into common one.
+        #( $error_num , $error_mesg ) = $dh->TablespacePercentUsage( $SPACE_WARNING_HWM );
+        ( $error_num , $error_mesg ) = $dh->runSQL1( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/tblsp_usage.sql", "(\\S)+", $SPACE_WARNING_HWM );
+
+
+        if ( $error_num == $STATUS {'SUCCEED'} ) {
+            my $subject = "Tablespace Usage High Alert (>=$SPACE_WARNING_HWM) on ";
+            $subject .= $config->getOraSid() . " - " . Util::UTIL::getDateStr();
+
+            Util::UTIL::SendAlert ( 'TEXT', 'DBA' , $subject , $error_mesg );
+
+        } 
+    }
+}

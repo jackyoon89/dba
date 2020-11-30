@@ -1,0 +1,87 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::DATABASE;
+
+
+
+use vars qw ( $opt_d $opt_i $opt_w $opt_c );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	
+    getopts('d:i:w:c:');
+
+    if (!defined $opt_d || !defined $opt_i || !defined $opt_w || !defined $opt_c || ($opt_w >= $opt_c)){
+		
+        print "Standby log application lag monitoring plugin.\n\n";
+       	print "Usage : check_oracle_standby_lag -d DB_NAME -i DEST_ID -w minutes_delay -c minutes_delay\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    my $delay = checkDestStatus( $opt_d , $opt_i );
+
+
+    if ( $delay =~ /^$/ ) {
+       print "Standby database lag time - UNKNOWN!";
+       exit $ERRORS{'UNKNOWN'};
+    }
+
+    print "Standby database is behind $delay minutes - ";
+
+    if ( $delay >= $opt_c ) {
+        print "CRITICAL";
+        exit $ERRORS{'CRITICAL'};
+    } elsif ( $delay >= $opt_w && $delay < $opt_c ) {
+        print "WARNING";
+        exit $ERRORS{'WARNING'};
+    } else {
+        print "OK";
+        exit $ERRORS{'OK'};
+    }
+
+}
+
+
+sub checkDestStatus {
+
+    my ($database, $dest_id , $result) = ( @_, '' );
+
+    my $config = new Db::CONFIG ( $database );
+
+    # Status check deferred because it's a standby database
+    #
+    if ( $config->isStandby() =~ /yes/i ) {
+        print "Standby Database - Status Check deferred.";
+        exit $ERRORS{'OK'};
+    }
+    
+    my $dh = new Db::DATABASE( $database );
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/standby_lag_min.sql $dest_id" );
+    @_ = split ('\n', $_ );
+
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        $_ =~ s/^\s+//g;
+        $result = $_;
+    }
+    return $result;
+}
+

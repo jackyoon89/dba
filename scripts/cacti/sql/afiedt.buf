@@ -1,0 +1,6 @@
+select 'thread'||t.thread#||':'||count(*)
+  from v$log_history h, v$thread t
+ where h.thread#(+) = t.thread#
+   and h.first_time(+) >= sysdate - 1/24
+ group by t.thread#
+/

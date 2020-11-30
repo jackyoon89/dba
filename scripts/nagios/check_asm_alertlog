@@ -1,0 +1,106 @@
+#!/usr/bin/perl -w 
+
+use strict;
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+my $GREP = '/bin/grep';
+my $TAIL = '/usr/bin/tail';
+
+
+main();
+
+
+sub main {
+
+	my $msg = '';
+
+	getopts('d:');
+
+	if ( !defined $opt_d ) {
+		print "Check errors from the alert_SID.log file plugin.\n\n";
+		print "Usage : check_oracle_alertlog -d DB_NAME\n";
+
+		exit $ERRORS{'UNKNOWN'};
+	}
+
+	# Set Unique Database name
+        my $dh     = new Db::DATABASE( uc $opt_d );
+
+        my $config = new Db::CONFIG( uc $opt_d );
+        my $sid    = $config->getOraSid();
+
+    
+	#my $logfile = $dh->getParameter('background_dump_dest') . "/alert_$sid.log";
+        my $logfile = $dh->getParameter('diagnostic_dest') . '/diag/asm/' . lc($dh->getParameter('db_unique_name'))  . '/' . uc($sid) . "/trace/alert_$sid.log";
+
+	$msg .= checkError( $logfile );		
+
+	print $msg;
+
+	if ( $msg =~ /ORA-/ ) {
+		exit $ERRORS{'CRITICAL'};
+	} 
+
+	exit $ERRORS{'OK'};
+	
+}
+
+sub checkError {
+	my $logfile = $_[0];
+	my $error_msg;
+	my ($OldNumErrors, $NewNumErrors) = ( 0 , 0 );
+	my ($sid) = $logfile =~ /\w*alert_(\+\w*).log/;
+	
+	$OldNumErrors =	getLastNumErrors( $sid );  
+	$NewNumErrors = getCurNumErrors ( $logfile ); 
+	
+	if ( $NewNumErrors != $OldNumErrors ) {
+		$error_msg = `$GREP ORA- $logfile |$TAIL -1`;
+		chomp $error_msg;
+
+		writeCurNumErrors ( $sid , $NewNumErrors );
+		return $error_msg;
+	} 
+	return "No errors found";
+}
+
+sub writeCurNumErrors {
+	my ($error_file , $num_errors ) = ("errors_$_[0]", $_[1] );
+	open NUM_ERRORS , ">/tmp/$error_file" or die "Can not open the file $error_file.\n";
+	print NUM_ERRORS $num_errors;
+	close NUM_ERRORS;
+}
+
+sub getCurNumErrors {
+	my $logfile = $_[0];
+	return `$GREP -c ORA- $logfile`;
+}
+
+sub getLastNumErrors {
+	my $error_file = "errors_$_[0]";
+	my $errors;
+
+	if ( -f "/tmp/$error_file" ) {
+		open NUM_ERRORS , "/tmp/$error_file" or die "Can not open the file $error_file.\n";
+		$errors = <NUM_ERRORS>;	
+		close NUM_ERRORS;
+	} else {
+		$errors = 0;
+	}
+	return $errors;
+}
+
+
+

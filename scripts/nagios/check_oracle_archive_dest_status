@@ -1,0 +1,74 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    my ($dest_id , $error) = ('','');	
+    getopts('d:');
+
+    if (!defined $opt_d ) {
+        print "Oracle ARCHIVE_DEST Status check plugin.\n\n";
+        print "Usage : check_oracle_archive_dest_status -d DB_NAME\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  checkArchiveDest( uc $opt_d );
+
+    if ( $_ =~ /^$/ ) {
+        print "All Archive Destnations valid - OK";
+        exit $ERRORS{'OK'};
+    } else {
+        ($dest_id, $error) = split(',', $_ );
+        print "$dest_id : $error - CRITICAL";
+        exit $ERRORS{'CRITICAL'};
+    }
+  
+}
+
+sub checkArchiveDest {
+    my ($database, $result) = ( @_, '');
+    my $config = new Db::CONFIG ( $database );
+
+    # Status check deferred because it's a standby database
+    if ( $config->isStandby() =~ /yes/i ) {
+        print "Standby Database - Status Check deferred.";
+        exit $ERRORS{'OK'};
+    }
+    
+    my $dh = new Db::DATABASE( $database ); 
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/archive_dest_status.sql" );
+
+    @_ = split ('\n', $_ );
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        $result = $_;
+    }
+    return $result;
+}
+
+
+
+

@@ -1,0 +1,6 @@
+# Matches : .*
+# Matches : XC.*
+# Matches : ((P|U)0.*|PROD*)
+
+
+CONFIGURE RETENTION POLICY TO REDUNDANCY 2;

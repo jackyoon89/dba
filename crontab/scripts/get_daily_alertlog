@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+#
+# Jack Yoon    2012/10/10    Introduce $dh->getParameter function
+# Jack Yoon    2011/07/07    Re-Written from old mon1d.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+
+main();
+
+sub main {
+
+    daily_alertlog_content();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : daily_alertlog_content
+# Purpose: Send contents of last days' alert.log file.
+# Return : N/A
+# -------------------------------------------------------------------------------
+
+sub daily_alertlog_content {
+
+    $ENV{TZ} = "BST+120";
+
+    my @databases = Db::CONFIG::getDbList();
+
+    my $logDate      = substr(Util::UTIL::getDateStr(), 0 , 10 );
+    my $filename      = '';
+    my $logs         = '';
+
+    foreach my $db ( @databases ) {
+
+        my $config  = new Db::CONFIG ( $db );
+        my $dh      = new Db::DATABASE ( $db );
+
+
+        next if ( $config->getDbType() =~ /pdb/i );
+
+
+        # 2015/07/29 : jyoon - regular expression added to identify 12c version
+        # 2012/10/10 : jyoon - introduct $dh->getParameter function.
+        my $logfile='';
+        if ( $config->getOraHome() =~ /\/12/ ) {
+            #$logfile = $dh->getParameter('diagnostic_dest') . '/diag/rdbms/' . lc($db)  . '/' . uc($db) . '/trace/alert_' . $config->getOraSid() . '.log';
+            $logfile = $dh->getParameter('diagnostic_dest') . '/diag/rdbms/' . lc($dh->getParameter('db_unique_name'))  . '/' . uc($config->getOraSid()) . '/trace/alert_' . $config->getOraSid() . '.log';
+        } else {
+            $logfile = $dh->getParameter('background_dump_dest') . '/alert_' . $config->getOraSid() . '.log';
+        }
+
+
+        #$logs = $dh->GetAlertLog( '2008/01/22');
+        $logs = $dh->GetAlertLog( $logDate , $logfile );
+
+
+        # 2010/01/20 -  Fix exception when $logs contents is empty.
+        if ( !defined $logs ) {
+            $logs = "There is no log entries on $logDate...";
+        }
+
+
+        ($filename) = $logfile =~ /\S+(alert_\S+.log)/;
+        Util::UTIL::SendAlert ( 'HTML' , 'DBA' , "Daily $filename file - $logDate" , $logs );
+
+        # Convert text to html format
+        $logs =~ s/\n/<br>/g;
+
+        Util::UTIL::setFileContents( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/log/$filename", $logs );
+
+    }
+
+}
+

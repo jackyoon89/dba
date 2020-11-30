@@ -1,0 +1,55 @@
+#!/usr/bin/perl -w
+# 
+# check_database
+#
+# Jack Yoon    2014/06/10	Created - loading v$sysstat and v$system_event to crontab schema
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+my %STATUS = ( 'FAILED',  0,
+               'SUCCEED', 1 );
+
+main();
+
+sub main {
+    load_system_stats();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : MonitorDBs
+# Purpose: Arrange Databases to be monitored
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub load_system_stats {
+    my @databases = ();
+
+    my $subject  = '';
+
+    @databases = Db::CONFIG::getDbList();
+    
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+        
+        my $config = new Db::CONFIG( $dbname );
+        
+        next if ( $config->isStandby() =~ /yes/i );
+
+        my $dh = Db::DATABASE->new( $dbname );
+
+        $_ = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/load_stats.sql" );
+
+
+        if ( $_ =~ /ORA-00942/ ) {
+            $subject = "Snapshot tables were not created on $dbname";
+            Util::UTIL::SendAlert ('TEXT','DBA', $subject , $_ );
+        }
+
+   }
+}

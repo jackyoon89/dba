@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d $opt_w $opt_c );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    my $usage = '';
+
+    getopts('d:w:c:');
+
+
+    if (!defined $opt_d || !defined $opt_w || !defined $opt_c || ($opt_w >= $opt_c)){
+		
+	print "Recovery area usage monitoring plugin.\n\n";
+       	print "Usage : check_oracle_tablespace -d DB_NAME -w PercentUsage -c PercentUsage\n\n";
+        print "Percent critical should be higher number than percent_warning.\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $usage =  checkRecoveryArea( uc $opt_d );
+
+    print "Recovery Area Usage($usage%) - ";
+
+    if ( $usage >= $opt_c ) {
+        print "CRITICAL";
+        exit $ERRORS{'CRITICAL'};
+    } elsif ( $usage >= $opt_w && $usage < $opt_c ) {
+        print "WARNING";
+        exit $ERRORS{'WARNING'}; 
+    } else {
+        print "OK";
+        exit $ERRORS{'OK'};
+    }
+}
+
+sub checkRecoveryArea {
+    my ($database, $usage) = ( @_, '');
+
+    my $config = new Db::CONFIG ( $database );
+
+    my $dh = new Db::DATABASE( $database ); 
+    
+    $_ = $dh->runSQL2($config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/recoveryarea.sql" );
+
+    @_ = split ( '\n' , $_ ); 
+
+
+    foreach ( @_ ) {
+
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        $_ =~ s/\s+//g;
+
+        $usage = $_;
+    }
+
+    return $usage;
+}
+
+
+
+

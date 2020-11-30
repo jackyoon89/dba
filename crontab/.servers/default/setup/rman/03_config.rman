@@ -1,0 +1,7 @@
+# Matches : (((P|U)0.*)|O01.*)
+# Matches : .*
+# Matches : XC.*
+# Matches : ((P|U)0.*|PROD*)
+
+
+CONFIGURE ARCHIVELOG DELETION POLICY TO  APPLIED ON ALL STANDBY;

@@ -1,0 +1,250 @@
+#!/usr/bin/env perl
+#
+# export
+#
+# This script will perform export backup of the database. This can support full or schama level backup by changing the parfile on the directory.
+# By default, this provide backup with compressed file so if you need to use the export file right after the backup then this script will not be an option.
+#
+# wtang		2010/12/02	Add postExport for setting the user/entity terminated when Scheduled Terminated date is passed. 
+#
+# jyoon         2010/03/22      Grant below two privilege to avoid export error
+#                               GRANT EXECUTE ON SYS.DBMS_DEFER_IMPORT_INTERNAL TO dba;
+#                               GRANT EXECUTE ON SYS.DBMS_EXPORT_EXTENSION TO dba;
+
+# jyoon		2009/02/03	Add exp_backup_dest=NONE which will disable to run export backup.
+#				This feature will be useful when you have more than one databases and some of them you don't want to export.		
+# jyoon		2008/12/03	Started OOP packages.
+# jyoon		2007/05/17	Add variables for the OS commands
+# jyoon		2007/05/14	Created
+#
+
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Long;
+
+use Cwd;
+use XML::Simple;
+use File::Path;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my %COMPRESSION = ( 'gzip'     => 'gz',
+                    'bzip2'    => 'bz2',
+                    'compress' => 'Z' );
+
+
+my $SCP="/usr/bin/scp";
+my $RM="/bin/rm";
+my $MKNOD="/bin/mknod";
+my $LS="/bin/ls -t";
+
+
+
+# Reading Configuration file
+my $file   = '/home/app/oracle/admin/DBA/config/export.xml';
+my $xsl    = XML::Simple->new();
+my $exp_config = $xsl->XMLin($file);
+
+        
+# Setting parameters
+my $COMPRESS   = $exp_config->{compress};
+my $LOGDIR     = $exp_config->{logdir};
+my $DESTDIR    = $exp_config->{destdir};
+my $REDUNDANCY = $exp_config->{redundancy};
+my @DUPLICATES = split( /,/, $exp_config->{duplicate});
+
+
+# export specific parameters
+#my $ISCOMPRESS = $exp_config->{parameter}->{compress};
+#my $ISDIRECT   = $exp_config->{parameter}->{direct};
+#my $ISFULL     = $exp_config->{parameter}->{full};
+#my $BUFFERSIZE = $exp_config->{parameter}->{buffer};
+# 2012/10/16 - jyoon : Consolated parameters
+my $PARAMETERS = $exp_config->{parameter};
+        
+
+ArrangeExport();
+
+
+# ---------------------------------------------------------------------------------------
+# Name    : ArrangeExport
+# Purpose : Arrange export backup for all the databases registered in /etc/oratab file.
+# Return  : N/A
+# ---------------------------------------------------------------------------------------
+sub ArrangeExport {
+
+	my @listDatabases = Db::CONFIG::getDbList();
+
+	my ( $userinfo , $cmd , $pipe , $logfile , $zipfile ) = ( '', '', '', '' , '' );
+
+
+	foreach my $database ( @listDatabases ) {
+
+            next if (Util::UTIL::isMonitor( $database ) =~ /NO/i);
+
+                next if (Util::UTIL::isMonitor( $database) =~ /NO/i);
+
+		my $config = new Db::CONFIG( $database );
+
+                if ( $config->isStandby() =~ /yes/i || 
+                     $config->isAsm() =~ /yes/i     ||
+                     $config->isExport() =~ /no/i )    {   # Do nothing 
+                    next;                                  # if it's Standby or ASM
+                }
+
+
+		$config->setDbEnv();
+
+		my $SCRIPT_HOME = "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts";
+
+
+		( $pipe, $zipfile ) = makePipe( $config );
+
+		$userinfo = $config->getSystemUser();
+
+
+		$cmd = "$ENV{ORACLE_HOME}/bin/exp $userinfo log=$LOGDIR/export_$database.log file=$pipe $PARAMETERS"; 
+
+		#system ( $cmd );
+		system ( "$cmd 2>/dev/null" );
+	
+
+
+		$logfile = Util::UTIL::getFileContents( "$LOGDIR/export_$database.log" );	
+                	
+                $logfile .= postExport( $database );  
+
+                ( $logfile =~ /successfully with warning/ )   ? sendReport ( 'warning' , $database, $logfile )  :
+                ( $logfile =~ /successfully without warning/ )? sendReport ( 'succeed' , $database , $logfile ) :
+			                                        sendReport ( 'failed' ,  $database , $logfile ); 
+                ( $logfile =~ /fail/ )                        ? System ( "$RM $zipfile" ): DeleteObsolete( $config );
+
+
+                $logfile =~ s/\n/<br>/g;
+
+		
+		rmPipe( $pipe );
+
+                next if $#DUPLICATES <= 0;
+                foreach my $dest ( @DUPLICATES ) {
+			system ( "$SCP $zipfile $dest" );
+
+                }
+
+	}	
+}
+
+# -------------------------------------------------------------------------------
+# Name   : DeleteObsolete
+# Purpose: Delete Obsoleted backups 
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub DeleteObsolete {
+	my $config = shift;
+
+        my $database  = $config->getDbName();
+
+	my @listFiles = `$LS $DESTDIR/$database/*dmp*`;
+	my $num = 0;	
+
+	foreach my $file ( @listFiles ) {
+		$num += 1;
+
+		if ( $num > $REDUNDANCY )  {
+
+			system ( "$RM $file" );
+
+		}
+	}
+	
+}
+
+# -------------------------------------------------------------------------------
+# Name   : makePipe
+# Purpose: Make pipe and perform compression in the back.
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub makePipe {
+	my $config   = shift;
+
+	my $database = $config->getDbName();
+	
+	my $pipe     = "/tmp/$database.pipe";
+
+	my $FILE_EXT = '';
+   
+        my $EXP_BACKUP_DEST = $DESTDIR . "/" . $database;
+ 
+        
+        # Create directory if not exists
+        eval{ mkpath($EXP_BACKUP_DEST ) }; 
+        if ( $@ ) {
+            print "Couldn't create $EXP_BACKUP_DEST: $@";
+            exit;
+        }
+
+        
+
+	# Test file extention
+        foreach my $command ( keys %COMPRESSION ) {
+
+                if ( $COMPRESS =~ /$command/ ) {
+
+                        $FILE_EXT = $COMPRESSION { $command };
+                }
+        }
+	
+	my $zipfile = "$EXP_BACKUP_DEST/export_$database" . "_" . Util::UTIL::getDateStrFilename() . ".dmp." . $FILE_EXT ;	
+	
+	system( "$MKNOD $pipe p" );
+
+	system( "$COMPRESS < $pipe > $zipfile &" );
+
+	return ($pipe, $zipfile );
+}
+
+# -------------------------------------------------------------------------------
+# Name   : rmPipe
+# Purpose: Remove pipe 
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub rmPipe {
+	my $pipe = $_[0];
+
+	system ( "$RM $pipe" );	
+}
+
+# -------------------------------------------------------------------------------
+# Name   : sendReport
+# Purpose: Send Export log as a report
+# Parameters :
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub sendReport {
+	my ( $status, $database, $payload )   = @_;
+
+	my $subject = "$database export backup finished. ( $status ) - " . Util::UTIL::getDateStr();
+	
+	Util::UTIL::SendAlert ( 'TEXT' , 'DBA' , $subject , $payload );
+
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : postExport
+# Purpose: Exec below two job as per chg-7647
+#                    whitney.delete_terminated_package.update_terminated;
+#                    whitney.delete_terminated_package.update_terminated_user;
+# Parameters :
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub postExport  {
+}
+
+
+
+

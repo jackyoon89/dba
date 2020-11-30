@@ -1,0 +1,30 @@
+SPOOL WEEKLY_PURGE_CX11
+
+SET TIMING ON
+SET ECHO ON
+
+WHENEVER SQLERROR CONTINUE
+
+SET HEADING OFF
+
+SELECT 'Purge started at                   : '||SYSTIMESTAMP FROM DUAL;
+
+SET HEADING ON
+
+execute whitney.purge_master.weekly_purge(-6, 4);
+
+SET HEADING OFF
+
+SELECT 'Purge finished at                   : '||SYSTIMESTAMP FROM DUAL;
+
+SET HEADING ON
+
+set lin 300 pages 1000 
+
+col message for a50
+
+SELECT * FROM WHITNEY.CXARCH$DEBUG WHERE DEBUG_DATE >SYSDATE-1 ORDER BY DEBUG_KEY;
+
+SPOOL OFF
+
+exit

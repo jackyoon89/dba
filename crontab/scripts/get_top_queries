@@ -1,0 +1,122 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+
+main();
+
+sub main {
+
+    my ($load , @top) = ('','');
+    my ($process , $database , $username , $sqlid , $sqlplan) = ('','', '','','');
+    my ($subject, $report, $header) = ('','','');
+    my $warning_hwm = 4;
+
+
+
+    $_ = `/usr/bin/top -bc -n1|/usr/bin/head -100`;
+
+
+    @top = split( '\n' , $_ );
+
+
+    foreach ( @top ) {
+
+        if ( $_  =~ /^$/ ) {
+            next;
+        }
+
+        # System load average
+        if ( m/(.+) (\d+\.\d+), (\d+\.\d+), (\d+\.\d+)/ ) {
+            $load =  $2;
+        }
+
+        # exit if load is less than $opt_l then exit
+        if ( $load < $warning_hwm ) {
+            exit;
+        }
+        
+
+        # valur of $_ at this point
+        # example) 
+        # 4092 - oracleFXPROD1 (LOCAL=NO)                                               
+        # 24988 - oracleFXPROD1 (LOCAL=NO) 
+        #
+        if ( m/(\d+)\soracle\s+(.+)\soracle(\S+)(\d+?) (.+)/) {
+            #print $_,"\n";
+            ($process, $database)  = ($1, $3);
+            
+            if ( $database =~ /ASM|[^\w]/ ) {
+                next; 
+            }
+
+            ($username, $sqlid) = get_query( $database , $process ); 
+
+            if ( $username !~ /^$/ ) { 
+                $header .= "****************************************************************************************************\n";
+                $header .= "Database : $database\n";
+                $header .= "Username : $username\n";
+                $header .= "****************************************************************************************************\n";
+            } else {
+                next;
+            }
+
+            $sqlplan= get_plan( $database , $sqlid );
+
+            if ( $sqlplan !~ /^$/ ) {
+                $report .= $header . $sqlplan . "\n\n";
+            }
+
+        }
+    }
+
+
+    if ( $load >= $warning_hwm && $report !~ /^$/ ) {
+        $subject = "Warning> Heavy queries on current load average $load - " . Util::UTIL::getDateStr();
+        Util::UTIL::SendAlert('TEXT','DBA', $subject , $report );
+    }
+
+}
+
+
+sub get_query {
+    my ( $database , $process ) = @_;
+
+    my $config = new Db::CONFIG  ( $database );
+    my $dh     = new Db::DATABASE( $database );
+
+    net if ($config->isStandby() =~ /yes/i);
+
+    $_ = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/get_top_query.sql $process" );
+
+    #print $_,"\n";
+    if ( $_ =~ /no rows selected|ORA-/ ) {
+        return ('','','');
+    } 
+
+    return split('"' , $_);
+   
+}
+
+
+sub get_plan {
+    my ( $database , $sqlid) = @_;
+
+    my $config = new Db::CONFIG  ( $database );
+    my $dh = new Db::DATABASE( $database );
+
+    $_ = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/plan.sql $sqlid" );
+
+    #print $_,"\n";
+
+    return $_;
+}
+
+

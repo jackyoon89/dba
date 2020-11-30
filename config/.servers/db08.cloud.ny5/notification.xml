@@ -1,0 +1,11 @@
+<?xml version='1.0'?>
+<notification>
+    <mailhost>mailhost</mailhost>
+    <mailfrom>oracle@db08.cloud.ny5</mailfrom>
+    <group>
+       <dba>oracleDBA@currenex.com</dba>
+       <techops>oracleDBA@currenex.com</techops>
+       <tradeops>oracleDBA@currenex.com</tradeops>
+       <compliance>oracleDBA@currenex.com</compliance>
+    </group>
+</notification>

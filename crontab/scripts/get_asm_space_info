@@ -1,0 +1,52 @@
+#!/usr/bin/perl -w
+#
+# Jack Yoon    2011/07/07    Re-Written from old mon30m.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+
+main();
+
+sub main {
+
+    get_asm_space_info();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : get_asm_space_info
+# Purpose: get asm space information and write to a external file.
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub get_asm_space_info {
+
+    my @databases = Db::CONFIG::getDbList();
+
+    foreach my $dbname ( @databases ) {
+        my $config = new Db::CONFIG   ( $dbname );
+
+        if ( $config->isAsm() =~ /yes/i ) {
+
+            my $dh  = new Db::DATABASE ( $dbname );
+            $_      = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/asm_space.sql");
+
+            @_ =  split('\n', $_);
+
+            my $var = "";
+
+            foreach( @_ ) {
+                if ( $_ !~ /^$/ ) {
+                    $var .= $_ . "\n";
+                }
+            }
+
+            Util::UTIL::setFileContents( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/log/asm_space.txt", $var );
+        }
+    }
+}

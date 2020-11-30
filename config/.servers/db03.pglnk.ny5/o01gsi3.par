@@ -1,0 +1,6 @@
+directory=EXPDP_DIR
+full=y
+parallel=8
+compression=ALL
+consistent=Y
+exclude=table:"IN('SENT_MT300_ARCHIVE','RECEIVED_SWIFT_MSG_ARCHIVE','FX_TRANSACTION_ARCHIVE','MT300_DETAIL_ARCHIVE')"

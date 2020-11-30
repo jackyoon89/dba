@@ -1,0 +1,247 @@
+#!/usr/bin/perl -w
+# $Header: /home/app/oracle/admin/DBA/crontab/rman/hotbackup.pl,v 1.0  2007/01/16 jyoon Exp $
+# 
+# rman_hotbackup.pl 
+# 
+# 1. Perform Backup for the database which are listed on the /etc/oratab.
+# 2. Send Status Email 
+#
+# jyoon		2012/10/17	Support two different daily and weekly backups.
+#                               Syntax) rman_backup_type=DAILY:WEEKLY
+#                               ex) rman_backup_type=ARCHIVELOG:HOT
+#
+# jyoon		2009/03/06	Added "archivelog_only" parameter. This will enable daily archivelog backup apart from weekly hotbackup.
+#                               $ rman_backup.pl --archivelog_only
+# jyoon		2009/02/03	Added rman_backup_type=NONE which will disable backup.	
+#				This feature will be useful when you have more than one databases and some of them you don't want to backup.
+# jyoon		2008/12/09	Start OOP
+# jyoon		2007/01/16	Created
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Long;
+use Util::UTIL;
+use Db::CONFIG;
+
+
+my %STATUS  = ( 'FAILED'  ,  0, 'SUCCEED' , 1 );
+my $payload = '';
+
+
+main();
+
+
+sub main {
+
+    # 2012/10/17 - jyoon : This part is depreciated.
+    #                      All backuptype will not be controlled by database.ini
+    #use vars qw ( $isArchiveonly  $isPurgeonly $isHelp );
+    #
+    #GetOptions ( 
+    #    'archivelog_only' => \$isArchiveonly , 
+    #    'purge_only'      => \$isPurgeonly , 
+    #    'help'            => \$isHelp 
+    #);
+    #
+    #	
+    #if ( defined $isHelp ) {
+    #    print_help();
+    #}
+    # 
+    #( defined $isArchiveonly )? ArrangeBackup( 'ARCHIVELOG' ) : ( defined $isPurgeonly )? ArrangeBackup( 'PURGEONLY' ) : ArrangeBackup( 'DATABASE' ) ;
+    ArrangeBackup();
+
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : ArrangeBackup
+# Purpose: This routine serialize the backup of the databases on the server.
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub ArrangeBackup {
+    my $sid = '';
+    my $subject  = '';
+
+    my @listDatabases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @listDatabases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+	
+        my $config = new Db::CONFIG ( $dbname );
+    
+        if ( $config->isAsm() =~ /yes/i ) {   # Do nothing 
+            next;                             # if it's ASM
+        }
+  
+        if ( $config->getDbType() =~ /pdb/i ) {
+            next;
+        }
+
+
+        # ---------------------------------------------------------------------------------------
+        # 2012/10/17 - jyoon : To support both daily and weekly backup, this routine was added
+        #                      Set backupType to either daily or weekly based on current dayName
+        # ---------------------------------------------------------------------------------------
+        my ($daily_backup_type , $weekly_backup_type ) = split(':', $config->getRmanBackupType());
+
+        # JYOON - 2020/08/25 : Take out Sun day from weekly full backup.
+        #my $backupType = (Util::UTIL::getDayNameUnx() =~ /Sat|Sun/ )? $weekly_backup_type : $daily_backup_type;
+        my $backupType = (Util::UTIL::getDayNameUnx() =~ /Sat/ )? $weekly_backup_type : $daily_backup_type;
+
+
+        # return if backupType is specified NONE
+        if ( $backupType eq "NONE" ) {
+            # Go and Check next database
+	    next;	
+        }
+
+        #my $userInfo = $config->getSysUser();
+
+
+        $subject = "( $dbname ) " . ucfirst( lc ($backupType)) . " backup on " . Util::UTIL::getHostname();
+
+        #if ( RmanBackup( $backupType , $userInfo ) == $STATUS{'SUCCEED'} ) {
+        if ( RmanBackup( $backupType ) == $STATUS{'SUCCEED'} ) {
+            $subject .= "( succeed ) - ";
+        } 
+        else {
+            $subject .= "( failed ) - ";
+
+            # 2019/12/03 : Changed to sent email only when it fails.
+            $subject .= Util::UTIL::getDateStr();
+            Util::UTIL::SendAlert( 'TEXT', 'DBA' , $subject, $payload );
+        }
+
+    }
+}
+
+# -------------------------------------------------------------------------------
+# Name   : RmanBackup
+# Purpose: Perform RMAN Backup
+# Return : %STATUS{'FAILED'}, $STATUS{'SUCCEED'} 
+# -------------------------------------------------------------------------------
+sub RmanBackup {
+	my ( $backupType ) = @_;
+
+	# 1. Get template file
+	# 2. Replace TAG_NAME to date string( ex:20100321 )
+        # 3. Create rman backup command file
+        # 4. Execute backup
+
+	# 1.
+	my $template = "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/rman_" . lc ( $backupType ) . "backup.template";
+
+	# 2.
+	my $content = Util::UTIL::getFileContents ( $template );
+        
+	my $tag = `/bin/date '+%Y%m%d'`;
+
+	chomp $tag;
+
+	$content =~ s/TAG_NAME/$tag/g;
+
+
+	# 3.
+	my $script = "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/log/rman_" . lc ( $backupType) . "backup.rcv";
+	
+	Util::UTIL::setFileContents( $script , $content );
+
+        # Uncomment these for debugging
+        #print "\n$script\n";
+        #print "\n$content\n";
+
+	# 4.
+	$payload = `$ENV{ORACLE_HOME}/bin/rman target \/ nocatalog cmdfile $script`;
+
+
+	AddLog( $ENV{ORACLE_SID} , $payload );
+
+	if ( $payload =~ /^Error|ORA-/ ) {
+		return $STATUS{'FAILED'};
+	} else {
+		return $STATUS{'SUCCEED'};
+	}
+}
+ 
+# -------------------------------------------------------------------------------
+# Name   : AddLog
+# Purpose: Add the result to the log file.
+# Parameters :  $_[0] : ORACLE_SID , 
+#		$_[1] : $payload
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub AddLog {
+	my $sid = shift;
+        my $htmlout = '';
+
+        if ( defined $sid ) {
+                $htmlout  = $_[1];
+                $htmlout .= "#########################################################\n";
+                $htmlout .= " Backup fished - " . Util::UTIL::getDateStr() . "\n";
+                $htmlout .= "#########################################################\n";
+
+                $htmlout =~ s/\n/<br>/g;
+
+                open ( OUT , "> $ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/log/rman_$sid.log" );
+
+                print OUT $htmlout;
+
+                close OUT;
+        }
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : print_help
+# Purpose: 
+# Parameters :  
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub print_help {
+	print "\n
+NAME
+	rman_backup - Rman backup script 
+
+SYNOPSIS
+	rman_backup OPTIONS
+
+	--archivelog_only
+	--help
+
+DESCRIPTION
+	* This script reads database.ini file by calling Db::CONFIG library and get proper backup mode.
+	
+	Backup Mode:
+	rman_backup_type = COLD | HOT | NONE
+
+
+	* Optionally, this script can be called with parameters which are archivelog_only and help. 
+
+	--archivelog_only : This parameter can be passed if you only want to backup archivelog files. 
+			    This parameter is useful when you want to perform daily archive log in conjunction with weekly hotbackup.
+
+	--help : Shows scription of this script.
+
+EXAMPLES
+	rman_backup 
+		Read database.ini file and process designated backup method.(COLD,HOT or NONE)
+
+	rman_backup --archivelog_only
+		Read database.ini file and process archivelog_only backup only when the backup method is HOT. 
+		This parameter will be ignored if your backup method is defined COLD.
+
+	rman_backup --help
+		Shows description.
+
+BUGS
+	None
+
+AUTHORS
+	Jack Yoon < jyoon\@currenex.com >
+\n";
+	exit;
+}

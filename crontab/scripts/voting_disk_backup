@@ -1,0 +1,111 @@
+#!/usr/bin/perl -w
+#
+# voting_disk_backup
+#
+# 8/15/2011 - jyoon	Re-written the configuration part with xml
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use XML::Simple;
+use Getopt::Long;
+use Util::UTIL;
+
+
+# As a general rule on most platforms, including Linux and Sun, the block size
+# for the 'dd' command should be 4k, to ensure that the backup of the
+# Voting Disk gets complete blocks.
+my $DD     = "/bin/dd bs=4096 ";
+my $CP     = "/bin/cp";
+my $LIST   = "/bin/ls -t";
+my $REMOVE = "/bin/rm";
+
+# Set Date string to make unique backup Id.
+my $DATE = `/bin/date '+%Y%m%d%H%M%S'`;
+
+# XML Configuration file 
+my $config_file = '/home/app/oracle/admin/DBA/config/cluster.xml';
+
+
+main();
+
+sub main {
+    my ( $subject , $content ) = ();
+
+    # Read configuration from XML configuration file
+    my $xsl    = XML::Simple->new();
+    my $config = $xsl->XMLin( $config_file );
+    
+    # Get retention and backup destination.
+    my $backup_dest = $config->{cluster}->{vote_disks}->{backup_dest};
+    my $retention   = $config->{cluster}->{vote_disks}->{retention};
+
+
+
+    # Start Backup of 3 voting disks.
+    chomp $DATE;
+
+
+    foreach my $vote ( $config->{cluster}->{vote_disks}->{votedisk} ) {
+        my $i = 0;
+
+        foreach my $source (@$vote) {
+
+            print $source,"\n";
+            my $status = (backup_source( $source , "$backup_dest/votedisk${i}_$DATE.dat" ) == 0)? "succeed" : "failed";
+           
+            $content .= "$source back up to $backup_dest/votedisk${i}_$DATE.dat has $status.\n";
+            
+            $i++;
+        }
+    }
+
+
+    # Check the backup status and send notification
+    $subject = "Voting Disk backup - " . Util::UTIL::getDateStr(); 
+
+    Util::UTIL::SendAlert ( 'TEXT', 'DBA' , $subject , $content );
+
+    # Delete obsoleted files on the destination
+    manage_retention( $backup_dest , ($retention * 3));
+}
+
+
+# Perform voting disk backup
+sub backup_source {
+    my ( $mesg, $source , $backup_dest ) = ( '' , @_ );
+
+
+    if ( $source =~ /\/dev/ ) {
+        print "device : $source\n";
+        $mesg = `$DD if=$source of=$backup_dest 2> /dev/null`;
+    } else {
+        print "file : $source\n";
+        $mesg = `$CP $source $backup_dest`;
+    }
+
+    # Return 0 if succeed , -1 otherwise.
+    return ( $? == 0 )? 0 : -1 ;
+
+}
+
+
+# Manage retention period of the voting disk backup
+sub manage_retention {
+    my ( $backup_dest , $retention ) = @_;
+
+    my @listFiles = `$LIST $backup_dest/*.dat`;
+    my $num = 0;
+
+    foreach my $file ( @listFiles ) {
+        $num++;
+        
+        if ( $num > $retention ) {
+            system ( "$REMOVE $file" );
+        }
+    }
+
+}
+
+
+

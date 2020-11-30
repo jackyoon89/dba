@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<notification>
+    <mailhost>mailhost</mailhost>
+    <mailfrom>oracle@dbmon01.ny9</mailfrom>
+    <group>
+       <dba>oracleDBA@eexchange.com</dba>
+       <reporting>oracleDBA@eexchange.com</reporting>
+       <techops>oracleDBA@eexchange.com</techops>
+       <tradeops>oracleDBA@eexchange.com</tradeops>
+       <compliance>oracleDBA@eexchange.com</compliance>
+    </group>
+</notification>

@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+# 
+# check_database
+#
+# Jack Yoon    2011/06/25    Re-Written from old mon5m.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+my %STATUS = ( 'FAILED',  0,
+               'SUCCEED', 1 );
+
+
+main();
+
+sub main {
+    check_database_lists();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : MonitorDBs
+# Purpose: Arrange Databases to be monitored
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub check_database_lists {
+    my (@actual_databases, @registered_databases, @unregistered_databases) = ();
+    my $message = "Below databases are running on the server \nbut are not configured on crontab.\n\n"; 
+    my $subject  = '';
+    
+    @actual_databases     = `ps -ef|awk -Fora_pmon_ '/ora_pmon_/ { print \$2}'|grep -v "/"`;
+    @registered_databases = Db::CONFIG::getDbList();
+    
+    # 2017/01/02 - Add this to identified unregistered pdbs
+    foreach my $dbname ( @registered_databases ) {
+        my $config = new Db::CONFIG( $dbname );
+
+        if ( $config->getDbType() =~ 'container' ) {
+            push(@actual_databases , get_pdbs( $dbname ));
+        }
+    }
+
+
+    my ($is_alert , $database_found ) = (0,0);
+    foreach my $actualdb( @actual_databases ) {
+        chomp($actualdb);
+
+        foreach my $dbname ( @registered_databases ) {
+            my $config = new Db::CONFIG( $dbname );
+            my $sid    = $config->getOraSid();           
+
+            $database_found = 1 if ($actualdb eq $sid || $actualdb eq $dbname);      # get the actual SID to compare with the process
+
+        }
+
+        if ( $database_found == 0 ) {                        # if database is running but not found in the configuration
+            push( @unregistered_databases, $actualdb );      # push unregistered_databases into the array
+            $is_alert = 1;
+        }
+        $database_found = 0;
+    }
+
+   
+    if ( $is_alert == 1 ) { 
+        if (scalar @unregistered_databases == 1 ) {          # use singular if found only one database
+            $message =~ s/databases/database/g; 
+            $message =~ s/are/is/g;
+        }
+         
+        foreach ( @unregistered_databases ) {
+            $message .= $_ . "\n";
+        }
+
+        $subject = "Database(s) with no crontab configuration found!.";
+        Util::UTIL::SendAlert('TEXT','DBA', $subject, $message );
+    }
+}
+
+sub get_pdbs {
+    my ( $dbname ) = @_;
+    my @pdbs = ();
+
+    my $dh = Db::DATABASE->new( $dbname );
+    $_ = $dh->runSQL_by_internal( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/get_pdbs.sql" );
+
+    @_ = split ("\n", $_ );
+
+    foreach my $pdb ( @_ ) {
+        push( @pdbs , $pdb ) if ( $pdb !~ /^$/ );
+    }
+
+    return @pdbs;
+}

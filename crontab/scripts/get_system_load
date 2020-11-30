@@ -1,0 +1,27 @@
+#!/usr/bin/perl -w
+#
+# Jack Yoon    2011/06/24    Re-Written from old mon10m.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Cwd;
+use Sys::SYSTEM;
+
+my %STATUS = ( 'FAILED',  0,
+               'SUCCEED', 1 );
+
+
+main();
+
+sub main {
+    sysload();
+}
+
+sub sysload {
+        my $sys = new Sys::SYSTEM;
+
+        my $logfile = cwd() . "/../scripts/log/log_sys_load.log";
+
+        $sys->log_sys_load( $logfile );
+}

@@ -1,0 +1,70 @@
+#!/usr/bin/env perl 
+#
+# Jack Yoon    2011/07/07    Re-Written from old mon1d.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Cwd;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $fileSize='102400k';
+my $payload = '';
+my $subject = '';
+
+my $FIND = "/usr/bin/find";
+my $XARGS = "/usr/bin/xargs";
+my $LS    = "/bin/ls";
+my $AWK   = "/bin/awk";
+my $GREP  = "/bin/grep";
+my $SORT  = "/bin/sort";
+
+main();
+
+sub main {
+
+    monitor_logfile_size();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : MonLogfileSize
+# Purpose: Monitor logfile size and alert
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub monitor_logfile_size {
+
+    my $logDate      = substr(Util::UTIL::getDateStr(), 0 , 10 );
+    my $listFiles = '';
+
+
+    #
+    # 2010/01/25 - Jyoon
+    # Changed to support any *.trc or *log file search which the size is greater than a given size
+    #
+    #my $cmd = "$FIND $ENV{ORACLE_BASE} -regex \"^.*\\(alert\\|listener\\|_ora_\\).*\\(trc\\|log\\)\$\" -size +100000k -print";
+    my $cmd = "$FIND $ENV{ORACLE_BASE} -regex \".*\\.\\(trc\\|log\\)\" -size +$fileSize -print";
+
+
+    # 2010/01/25 - Jyoon
+    # Changed to display full information
+    #
+    #$listFiles = `$cmd|$XARGS -n1 $LS -l|$AWK '{ print \$9" ("\$5")"}'|$GREP ^/`;
+    #$listFiles = `$cmd|$XARGS -n1 $LS -l|$GREP ^-`;
+    $listFiles = `$cmd`;
+
+
+    if ( $listFiles ) {
+
+        #$listFiles =~ s/\n/<br>/;
+
+        my $subject = "Log file(s) size too big!!! - $logDate";
+
+        Util::UTIL::SendAlert ( 'TEXT', 'DBA' , $subject , $listFiles );
+    }
+}
+
+

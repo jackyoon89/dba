@@ -1,0 +1,3 @@
+ create index test_idx on PAMRCPY ( Bank, portfolio, ExpdCashDate)
+    tablespace PAMIND
+/

@@ -1,0 +1,25 @@
+shutdown immediate;
+
+startup mount;
+
+
+run { 
+   backup database tag 'DB_TAG_NAME';
+
+   backup current controlfile tag 'CTRL_TAG_NAME';
+
+}
+
+crosscheck backupset;
+crosscheck archivelog all;
+crosscheck copy;
+
+delete noprompt expired copy;
+delete noprompt expired backupset;
+delete noprompt expired archivelog all;
+delete noprompt obsolete;
+
+list backupset;
+
+alter database open;
+

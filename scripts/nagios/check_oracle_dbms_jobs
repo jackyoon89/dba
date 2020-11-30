@@ -1,0 +1,69 @@
+#!/usr/bin/perl -w
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    getopts('d:');
+
+    if (!defined $opt_d ) {
+        print "WHITNEY DBMS Job monitoring plugin.\n\n";
+        print "Usage : check_oracle_dbms_jobs -d DB_NAME\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  check_dbms_jobs( uc $opt_d );
+    $_ =~ s/^\/|\/$//g;
+		
+    if ( $_ =~ /FAILED|STOPPED/ ) {
+        exit $ERRORS{'CRITICAL'};
+    } ;
+
+    print "SCHEDULER JOBS : OK" . "\n" ;
+    exit $ERRORS{'OK'};
+}
+
+sub check_dbms_jobs {
+    my ( $database ) = @_;
+    my ( $mesg )     = ('');
+    my $config = new Db::CONFIG ( $database );
+
+    my $dh = new Db::DATABASE( $database );
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/monitor_dbms_job.sql" );
+    @_ = split ('\n', $_ );
+
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+	if ( $_ =~ /FAIL|STOP/ )  {
+            print $_,"\n";
+	    $mesg .= $_;
+        }
+    }
+
+    if ( $mesg !~ /^$/ ) {
+        $mesg  =~ s/,$//g;
+    }
+
+    return $mesg;
+}

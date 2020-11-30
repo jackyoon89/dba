@@ -1,0 +1,1 @@
+delete noprompt archivelog until time 'sysdate - 1';

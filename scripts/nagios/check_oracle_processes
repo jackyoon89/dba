@@ -1,0 +1,88 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d $opt_w $opt_c );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    my ( $cur_processes , $max_processes , $percent_allocated ) = ( '','','');
+	
+    getopts('d:w:c:');
+
+    if ((!defined $opt_d || !defined $opt_w || !defined $opt_c)||($opt_w >= $opt_c) ){
+        print "Oracle Process HWM check plugin.\n\n";
+        print "Usage : check_oracle_processes -d DB_NAME -w PercentUsage -c PercentUsage\n\n";
+        print "percent critical should be higher number than percent_warning.\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  checkProcesses( uc $opt_d );
+
+    ( $cur_processes , $max_processes ) = split ( ' ' , $_ );
+    $percent_allocated = ($cur_processes / $max_processes ) * 100;
+
+
+    if ( $percent_allocated >= $opt_c ) {
+
+        print "Oracle Processes HWM($percent_allocated% allocated) - CRITICAL ($cur_processes/$max_processes)";
+        exit $ERRORS{'CRITICAL'};
+
+    } elsif ( $percent_allocated >= $opt_w && $percent_allocated < $opt_c ) {
+
+        print "Oracle Processes HWM($percent_allocated% allocated) - WARNING ($cur_processes/$max_processes)";
+        exit $ERRORS{'WARNING'};
+
+    } else {
+
+        print "Oracle Processes HWM($percent_allocated% allocated) - OK ($cur_processes/$max_processes)";
+        exit $ERRORS{'OK'};
+
+    }
+
+}
+
+sub checkProcesses {
+    my ($database, $result) = ( @_, '');
+
+    my $config = new Db::CONFIG ( $database );
+
+    my $dh = new Db::DATABASE( $database ); 
+    
+    #$_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/processes.sql" );
+    $_ = $dh->runSQL_by_internal( "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/processes.sql" );
+
+    @_ = split ('\n', $_ );
+
+    foreach ( @_ ) {
+
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+
+        $result = $_;
+    }
+
+    return $result;
+}
+
+
+
+

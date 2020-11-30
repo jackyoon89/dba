@@ -1,0 +1,3 @@
+set line 180
+
+SELECT * FROM V$RECOVERY_AREA_USAGE;

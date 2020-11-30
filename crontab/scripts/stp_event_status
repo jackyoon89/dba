@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+# 
+# stp_event_status.pl 
+#
+# Produce a weekly report of parties and their unsent STP events and sent that to tradeops.
+# Tradeops should look at this list and turn off sstp events for parties that are not processing them.
+#
+# jyoon         2010/10/11 - Rewritten without PERL DBI/DBD 
+# jyoon		2008/12/09 - Start using Util::UTIL & Db:;CONFIG	
+# jyoon		2007/05/08 - Rewite the script to support multiple databases.
+# jyoon		2007/04/16 - Created 
+#
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+main();
+
+
+sub main {
+    ArrangeTask();
+}
+
+
+
+
+sub ArrangeTask {
+
+    my ($html, @row ) = ( '', '' );
+	
+    my @databases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $config = new Db::CONFIG   ( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing 
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+
+        $html  = "<FONT SIZE=\"2\" FACE=\"Arial\">\n" .
+                 "<H3>STP Event Status</H3>\n" .
+            	 "<LI><B>Database : $dbname</B>\n" .
+            	 "<LI><B>Parties and their unset STP events</B>\n" .
+            	 "<LI><FONT FACE=\"Arial\" SIZE\"2\" COLOR=\"#FF0000\">Tradeops should turn off event for the parties that are not processing them.</FONT>\n" .
+            	 "</FONT>\n" .
+            	 "<FONT FACE=\"Arial\" SIZE=\"2\">\n" .
+            	 "<TABLE BORDER=1 CELLPADDING=5>\n" .
+                 "<TR>\n" .
+             	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>TYPE</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>ENTITY_ID</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>LAST DOWNLOAD TIME</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>Total#</B></FONT></TD>\n" .
+            	 "</TR>\n";
+
+
+        my $dh = new Db::DATABASE( $dbname );
+		
+        $html .= $dh->runSQL2("$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/stp_event_status.sql");
+ 
+	Util::UTIL::SendAlert ( 'HTML' , 'DBA' , 'Monthly STP Event Status - ( ' . Util::UTIL::getDateStr() . ' ) ' , $html );
+	}
+}
+

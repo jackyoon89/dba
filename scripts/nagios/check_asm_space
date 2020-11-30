@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+# 
+# jyoon 11/17/2010 - Created
+#
+use strict;
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+use vars qw ( $opt_d $opt_w $opt_c );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    my ($ok, $warning, $critical ) = ("","","");
+
+    getopts('d:w:c:');
+
+    if ( !defined $opt_d || !defined $opt_w || !defined $opt_c ) {
+        print "ASM Disk space monitoring plugin.\n\n" .
+              "This script provides space monitoring of ASM disk(s).\n\n" .
+              "Usage : check_asm_space -d +ASM -w 70 -c 90\n\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    $_ = getPercentUse( $opt_d );   
+    @_ = split( '\n' , $_ );
+  
+    foreach ( @_ ) {
+        if ( $_ !~ /^$/ ) {
+            my ( $disk, $percent_use ) = split ( ' ' , $_ );
+            #next if ( $disk =~ /DG2|RECO_DG/ );
+
+            if ( $percent_use >= $opt_c ) {
+                $critical .= $disk . '(' . $percent_use . '%),';
+            } elsif ( $opt_w <= $percent_use && $percent_use < $opt_c ) {
+                $warning .= $disk . '(' . $percent_use . '%),';
+            } else {
+                $ok .= $disk . '(' . $percent_use . '%),';
+            }
+        }
+    }
+
+    $ok       =~ s/,$//g;
+    $warning  =~ s/,$//g;
+    $critical =~ s/,$//g;
+
+    my $mesg = $critical . $warning . $ok;
+    print $mesg;
+
+    if ( $critical !~ /^$/ ) {
+        exit $ERRORS{'CRITICAL'};
+    }
+
+    if ( $warning !~ /^$/ ) {
+        exit $ERRORS{'WARNING'}; 
+    }
+
+    exit $ERRORS{'OK'};
+}
+
+
+sub getPercentUse {
+    my ($database) =  @_;
+    my $config = new Db::CONFIG ( $database );
+
+    my $dh = new Db::DATABASE( $database );
+    $_     = $dh->runSQL2 ( "/home/app/oracle/admin/DBA/scripts/nagios/sql/asm_percent_usage.sql" );
+        
+    return $_;
+}

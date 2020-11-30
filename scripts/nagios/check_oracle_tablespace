@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d $opt_w $opt_c );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	
+    getopts('d:w:c:');
+
+    if (!defined $opt_d || !defined $opt_w || !defined $opt_c ){
+		
+	print "Tablespace usage monitoring plugin.\n\n";
+       	print "Usage : check_oracle_tablespace -d DB_NAME -w PercentUsed -c PercentUsed\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  checkTablespace( uc $opt_d );
+    $_ =~ s/^\/|\/$//g;
+
+
+    if ( $_ =~ /CRITICAL/ ) {
+        print $_;
+        exit $ERRORS{'CRITICAL'};
+    } elsif ( $_ =~ /WARNING/ ) {
+        print $_;
+        exit $ERRORS{'WARNING'};
+    }
+
+    print "Percent Freespace : OK ";
+    exit $ERRORS{'OK'}; 
+}
+
+sub checkTablespace {
+    my ($database) = @_;
+    my ($tablespace   , $percent_occupy) = ('','');
+    my ($warning      , $critical)     = ('','');;
+    my $config = new Db::CONFIG ( $database );
+    my $dh = new Db::DATABASE( $database ); 
+    
+    if ($config->isStandby() =~ /yes/i) {
+        print "Database Monitoring suspended for Standby database. - OK";
+        exit $ERRORS{'OK'}
+    }
+
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/tablespace_usage.sql" );
+    @_ = split ( '\n' , $_ ); 
+
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+
+        ($tablespace , $percent_occupy) = split(' ', $_ ); 
+  
+        if ( $percent_occupy > $opt_c ) {
+            $critical .= $tablespace . '(' . $percent_occupy . '%),';
+        } elsif ( $percent_occupy >= $opt_w && $percent_occupy < $opt_c ) {
+            $warning .= $tablespace . '(' . $percent_occupy . '%),';
+        }
+    }
+
+    if ( $critical !~ /^$/ ) {
+        $critical =~ s/,$//g;
+        $critical = "CRITICAL:" . $critical;
+    }
+  
+    if ( $warning !~ /^$/ ) {
+        $warning  =~ s/,$//g;
+        $warning  = "WARNING:" . $warning;
+    }
+
+    return $critical . '/' . $warning;
+}
+
+
+
+

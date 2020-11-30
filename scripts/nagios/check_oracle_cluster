@@ -1,0 +1,91 @@
+#!/usr/bin/perl -w 
+#
+# jyoon 05/29/2009 - Created
+#
+use strict;
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+
+use vars qw ( $opt_r $opt_v );
+
+my $GREP   = "/bin/grep";
+my $AWK    = "/usr/bin/awk";
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	my $msg = '';
+
+        my $config = new Db::CONFIG();
+
+	getopts('rv');
+
+	if ( !defined $opt_r && !defined $opt_v ) {
+		print "Cluster Components monitoring plugin.\n\n" .
+                      "This script provides monitoring of CRS Stack and Voting Disks depends on the option.\n\n" .
+		      "Usage : To monitor CRS Stack\n" .
+                      "        check_oracle_cluster -r\n\n" .
+                      "        To monitor Voting Disks \n" .
+		      "        check_oracle_cluster -v\n\n";
+
+		return $ERRORS{'UNKNOWN'};
+	}
+
+	# Check CRS Processes
+        if ( $opt_r ) {
+		if ( CheckCRSStack() == $ERRORS{'CRITICAL'} ) {
+			$msg = "CRS Stack Processe(s) - DOWN";	
+		} else {
+			$msg = "CRS Stack Processes - UP";	
+		}
+        } 
+  
+	# Check Voting Disks
+        if ( $opt_v ) {
+		if ( CheckVoteDisk() == $ERRORS{'CRITICAL'} ) {
+			$msg = "Some of voting disks are not accessible - FAILED";
+		} else {
+			$msg = "All voting disks are accessible - OK";
+		}	
+        }
+
+	print $msg;
+
+	if ( $msg =~ /DOWN|FAILED/ ) {
+		exit $ERRORS{'CRITICAL'};
+	}
+
+	exit $ERRORS{'OK'};
+
+}
+
+
+sub CheckVoteDisk {
+	my $vote_disks = `$ENV{"ORACLE_HOME"}/bin/crsctl query css votedisk | $GREP "disk(s)" | $AWK '{ print \$2 }'`;
+
+	if ( $vote_disks < 3 ) {
+                return $ERRORS{'CRITICAL'};
+        } else {
+                return $ERRORS{'OK'};
+	}
+}
+
+
+sub CheckCRSStack {
+
+        my $output = `$ENV{"ORACLE_HOME"}/bin/crsctl check crs | $GREP -v online`;
+
+        if ( $output !~ /^$/ ) {
+                return $ERRORS{'CRITICAL'};
+        } else {
+                return $ERRORS{'OK'};
+        }
+}
+

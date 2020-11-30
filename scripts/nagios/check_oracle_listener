@@ -1,0 +1,65 @@
+#!/usr/bin/perl -w 
+#
+# jyoon 09/13/2007 Created
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+
+use vars qw ( $opt_l );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	my $msg = 'Oracle Listener ';
+
+        my $config = new Db::CONFIG();
+
+	getopts('l:');
+
+	if ( !defined $opt_l ) {
+		print "Oracle Listener monitoring plugin.\n\n";
+		print "Usage : check_oracle_listener -l listener_name\n";
+
+		return $ERRORS{'UNKNOWN'};
+	}
+
+	my $listener = uc $opt_l;
+
+	if ( CheckListener( $listener ) == $ERRORS{'CRITICAL'} ) {
+		$msg .= $listener . " Status - DOWN";
+	} else {
+		$msg .= $listener . " Status - UP";
+	}
+
+
+	print $msg;
+
+	if ( $msg =~ /DOWN/ ) {
+		exit $ERRORS{'CRITICAL'};
+	}
+
+	exit $ERRORS{'OK'};
+
+}
+
+
+sub CheckListener {
+	my $listener = $_[0];
+
+        my $output = `$ENV{"ORACLE_HOME"}/bin/lsnrctl status $listener`;
+
+        if ( $output =~ /TNS-12541|TNS-12560|TNS-00511|TNS-01101/ ) {
+                return $ERRORS{'CRITICAL'};
+        } else {
+                return $ERRORS{'OK'};
+        }
+}
+

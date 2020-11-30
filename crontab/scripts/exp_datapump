@@ -1,0 +1,126 @@
+#!/usr/bin/env perl
+#
+# exp_datapump
+#
+# jyoon		2007/05/14	Created
+#
+
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+
+#use Getopt::Long;
+#use Cwd;
+#use XML::Simple;
+#use File::Path;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $REDUNDANCY=2;
+
+ArrangeExport();
+
+
+# ---------------------------------------------------------------------------------------
+# Name    : ArrangeExport
+# Purpose : Arrange export backup for all the databases registered in /etc/oratab file.
+# Return  : N/A
+# ---------------------------------------------------------------------------------------
+sub ArrangeExport {
+
+	my @listDatabases = Db::CONFIG::getDbList();
+
+
+	foreach my $database ( @listDatabases ) {
+
+                next if (Util::UTIL::isMonitor( $database ) =~ /NO/i);
+
+		my $config = new Db::CONFIG( $database );
+		$config->setDbEnv();
+
+                if ( $config->isStandby() =~ /yes/i || 
+                     $config->isAsm() =~ /yes/i     ||
+                     $config->isExport() =~ /no/i )    {   # Do nothing 
+                    next;                                  # if it's Standby or ASM
+                }
+
+                my $dh = Db::DATABASE->new( $database );
+
+                # 9/15/2020 - JYOON : Added to use separate pfile for each database if required
+                # If lc($database).par file exists then use that pfile
+		my $PARFILE   = "$ENV{ORACLE_BASE}/admin/DBA/config/expdp.par";
+                if (-e "$ENV{ORACLE_BASE}/admin/DBA/config/" . lc($database) . ".par") {
+                    $PARFILE = "$ENV{ORACLE_BASE}/admin/DBA/config/" . lc($database) . ".par"
+                } 
+
+                #print $database . "\n";
+                my $TIMESTAMP = Util::UTIL::getDateStrFilename();
+                my $DUMPFILE  = "expdp_" . $database . "_" . $TIMESTAMP . "_%U.dmp";
+                my $LOGFILE   = "expdp_" . $database . "_" . $TIMESTAMP . ".log";
+
+                #my $userinfo = ($config->getDbType() =~ /pdb/i ) ?$config->getSysUser() . "@" . $database : $config->getSysUser();
+                my $userinfo = $config->getSysUser();
+                my $dirPath  = $dh->runSQL2( $userinfo, "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/getDirectoryPath.sql" );
+                $dirPath=~ s/^\s+|\s+$//g;
+                #print $userinfo . "\n";
+                #print "Directory => " . $dirPath . "\n";
+ 
+                my $host_name = `/bin/hostname`;
+                chomp($host_name);
+
+		#my $cmd      = "$ENV{ORACLE_HOME}/bin/expdp \\\"\/ as sysdba\\\" parfile=$PARFILE dumpfile=$DUMPFILE logfile=$LOGFILE"; 
+		my $cmd = "$ENV{ORACLE_HOME}/bin/expdp $userinfo\@$host_name/$database parfile=$PARFILE dumpfile=$DUMPFILE logfile=$LOGFILE"; 
+		system ( "$cmd 2>/dev/null" );
+	
+		my $logfile = Util::UTIL::getFileContents( "$dirPath/$LOGFILE" );	
+                #print "$dirPath/$LOGFILE\n";
+                #print $logfile . "\n";
+                	
+
+                ( $logfile =~ /successfully/ )   ? sendReport ( 'succeed' , $database, $logfile )  : sendReport ( 'failed' ,  $database , $logfile ); 
+                DeleteObsolete( $database, $dirPath );
+
+
+	}	
+}
+
+# -------------------------------------------------------------------------------
+# Name   : DeleteObsolete
+# Purpose: Delete Obsoleted backups 
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub DeleteObsolete {
+    my ( $database, $dirPath ) = @_;
+
+    my @file_group =  `/bin/ls -l $dirPath/*.dmp|awk '{ print \$9 }'|awk -F/ '{ print \$6 }'| awk -F_ '{ print \$3 }'|/bin/sort -r |uniq`;
+
+    my $num = 1;
+    foreach my $timestamp ( @file_group ) {
+        chomp($timestamp);
+
+        if ( $num > $REDUNDANCY ) {
+            #print "/bin/rm -f $dirPath/expdp_" . $database . "_$timestamp*\n";
+            system( "/bin/rm -f $dirPath/expdp_" . $database . "_$timestamp*");
+        }
+        $num += 1;
+    } 
+	
+}
+
+# -------------------------------------------------------------------------------
+# Name   : sendReport
+# Purpose: Send Export log as a report
+# Parameters :
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub sendReport {
+	my ( $status, $database, $payload )   = @_;
+
+	my $subject = "$database datapump export finished. ( $status ) - " . Util::UTIL::getDateStr();
+	
+	Util::UTIL::SendAlert ( 'TEXT' , 'DBA' , $subject , $payload );
+
+}
+

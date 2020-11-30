@@ -1,0 +1,7 @@
+#!/bin/ksh
+
+SCRIPT_BASE=/home/app/oracle/admin/DBA
+COLLECTD_DIR=$SCRIPT_BASE/scripts/utility
+COLLECTD_CONF_DIR=$SCRIPT_BASE/config/collectd
+
+/usr/bin/python $COLLECTD_DIR/collectd_config.py > $COLLECTD_CONF_DIR/oracle.conf

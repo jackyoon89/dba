@@ -1,0 +1,74 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d $opt_s ) ;
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	
+    getopts('d:s:');
+
+    if (!defined $opt_d || !defined $opt_s ){
+		
+	print "Datafile rule monitoring plugin.\n\n";
+       	print "Usage : check_oracle_dbfile_rule -d DB_NAME -s STANDARD_DBFILE_SIZE(GB)\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  check_dbfile_rule( uc $opt_d );
+
+    if ( $_ =~ /FILE_ID/ ) {
+        print $_;
+        exit $ERRORS{'CRITICAL'};
+    }
+
+    print "All datafiles are following the dbfile rule.";
+    exit $ERRORS{'OK'};
+}
+
+sub check_dbfile_rule {
+    my ($database) = @_;
+    my ($tablespace , $file_id) = ('','');
+    my $result = '';
+
+    my $config = new Db::CONFIG ( $database );
+
+    # Status check deferred because it's a standby database
+    if ( $config->isStandby() =~ /yes/i ) {
+        print "Standby Database - Status Check deferred.";
+        exit $ERRORS{'OK'};
+    }
+
+    my $dh = new Db::DATABASE( $database ); 
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/dbfile_rule.sql $opt_s" );
+
+    @_ = split ( '\n' , $_ ); 
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        ($tablespace, $file_id) = split( ' ', $_ );
+        $result .= $tablespace . '(FILE_ID:' . $file_id . '),';
+    }
+    $result =~ s/,$//g;
+    return $result;
+}

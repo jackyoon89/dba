@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Cwd;
+use Util::UTIL;
+use Getopt::Long;
+
+my $current_dir = '/home/app/oracle/admin/DBA/crontab';
+
+main();
+
+sub main {
+    use vars qw ( $schedule $IsHelp );
+
+    GetOptions ( 'schedule=s' => \$schedule , 'help' => \$IsHelp );
+
+    if ( defined $IsHelp || (!defined $schedule && !defined $IsHelp)) {
+        print "This script provides framwork for crontab scheduler.\n\n";
+        print "cron_scheduler.pl --schedule [5m|10m|30m|1h|6h|1d|1d-weekday|1w|1m] [--help]\n";
+        
+        exit;
+    }    
+
+
+    ArrangeJobs( $schedule ); 
+}
+
+
+sub ArrangeJobs {
+    my $schedule   = $_[0] ;
+    my $target_dir = $current_dir . "/" . $schedule;
+  
+    opendir( DIR , $target_dir ) || die "Cannot find directory, $target_dir.\n";
+
+    foreach ( sort readdir( DIR ) ) {
+   
+        # if file name start with number 
+        if ( $_ =~ /^\d+/ ) { 
+           
+            my $file = $target_dir . "/" . $_; 
+
+            # Change active directory to the $target_dir directory.
+            chdir( $target_dir );
+
+            system("$file 2>> $current_dir/scripts/log/cron_scheduler.log");
+
+        }
+        
+    }
+
+    closedir( DIR );
+}

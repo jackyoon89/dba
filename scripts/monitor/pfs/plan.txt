@@ -1,0 +1,439 @@
+-------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                               | Name                          | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                                        |                               |   245K|   485M|       |  1435M  (1)|999:59:59 |
+|   1 |  SORT ORDER BY                                          |                               |   245K|   485M|   639M|  1435M  (1)|999:59:59 |
+|   2 |   VIEW                                                  | VW_AIS_FUND_ACCOUNTS          |   245K|   485M|       |  1435M  (1)|999:59:59 |
+|   3 |    UNION-ALL                                            |                               |       |       |       |            |          |
+|   4 |     SORT UNIQUE                                         |                               |   245K|   136M|   113G|  1435M(100)|999:59:59 |
+|   5 |      UNION-ALL                                          |                               |       |       |       |            |          |
+|   6 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+|   7 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+|   8 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+|   9 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+|  10 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+|  11 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|* 12 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|  13 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|* 14 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|* 15 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+|  16 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|* 17 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|* 18 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+|  19 |       TABLE ACCESS BY INDEX ROWID                       | FT_KTOTEXT                    |     1 |    29 |       |     3   (0)| 00:00:01 |
+|* 20 |        INDEX UNIQUE SCAN                                | PK_FT_KTOTEXT                 |     1 |       |       |     2   (0)| 00:00:01 |
+|  21 |       SORT AGGREGATE                                    |                               |     1 |    81 |       |            |          |
+|  22 |        NESTED LOOPS SEMI                                |                               |     1 |    81 |       |     9   (0)| 00:00:01 |
+|  23 |         NESTED LOOPS                                    |                               |     1 |    66 |       |     8   (0)| 00:00:01 |
+|  24 |          MERGE JOIN CARTESIAN                           |                               |     1 |    56 |       |     7   (0)| 00:00:01 |
+|  25 |           NESTED LOOPS SEMI                             |                               |     1 |    33 |       |     5   (0)| 00:00:01 |
+|  26 |            NESTED LOOPS                                 |                               |     1 |    18 |       |     4   (0)| 00:00:01 |
+|* 27 |             INDEX RANGE SCAN                            | IX_FT_KTOPLAN_IDKTO_IDNS      |     1 |    10 |       |     3   (0)| 00:00:01 |
+|* 28 |             INDEX FULL SCAN                             | PK_ST_OWNERSHIP               |     1 |     8 |       |     1   (0)| 00:00:01 |
+|* 29 |            INDEX RANGE SCAN                             | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+|  30 |           BUFFER SORT                                   |                               |     1 |    23 |       |     6   (0)| 00:00:01 |
+|  31 |            TABLE ACCESS BY INDEX ROWID                  | FT_TEXT                       |     1 |    23 |       |     2   (0)| 00:00:01 |
+|* 32 |             INDEX RANGE SCAN                            | AK_FT_TEXT                    |     1 |       |       |     1   (0)| 00:00:01 |
+|* 33 |          TABLE ACCESS BY INDEX ROWID                    | ST_OWNERSHIP                  |     1 |    10 |       |     1   (0)| 00:00:01 |
+|* 34 |           INDEX UNIQUE SCAN                             | PK_ST_OWNERSHIP               |     1 |       |       |     0   (0)| 00:00:01 |
+|* 35 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+|  36 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+|  37 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+|  38 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+|  39 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+|  40 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+|  41 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|* 42 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|  43 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|* 44 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|* 45 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+|  46 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|* 47 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|* 48 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+|  49 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+|  50 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+|  51 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+|  52 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+|  53 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+|  54 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|* 55 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|  56 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|* 57 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|* 58 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+|  59 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|* 60 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|* 61 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+|  62 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+|  63 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+|  64 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+|  65 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+|  66 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+|  67 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|* 68 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|  69 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|* 70 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|* 71 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+|  72 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|* 73 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|* 74 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+|* 75 |       HASH JOIN                                         |                               |   722 |   176K|       |  3475   (1)| 00:00:42 |
+|* 76 |        INDEX RANGE SCAN                                 | PK_ST_FUNDOFSESSION           |  1691 | 18601 |       |    10   (0)| 00:00:01 |
+|  77 |        NESTED LOOPS OUTER                               |                               |   694 |   162K|       |  3464   (1)| 00:00:42 |
+|* 78 |         HASH JOIN RIGHT SEMI                            |                               |   694 |   134K|       |  2112   (1)| 00:00:26 |
+|* 79 |          INDEX RANGE SCAN                               | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|* 80 |          HASH JOIN RIGHT SEMI                           |                               |   694 |   124K|       |  2109   (1)| 00:00:26 |
+|* 81 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|* 82 |           HASH JOIN RIGHT SEMI                          |                               |   694 |   114K|       |  2107   (1)| 00:00:26 |
+|* 83 |            INDEX RANGE SCAN                             | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|* 84 |            HASH JOIN RIGHT SEMI                         |                               |   694 |   104K|       |  2104   (1)| 00:00:26 |
+|* 85 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|  86 |             NESTED LOOPS                                |                               |       |       |       |            |          |
+|  87 |              NESTED LOOPS                               |                               |   694 | 96466 |       |  2102   (1)| 00:00:26 |
+|* 88 |               HASH JOIN                                 |                               |   694 | 73564 |       |   713   (1)| 00:00:09 |
+|  89 |                VIEW                                     | index$_join$_069              |   175 |  2100 |       |     5  (20)| 00:00:01 |
+|* 90 |                 HASH JOIN                               |                               |       |       |       |            |          |
+|* 91 |                  HASH JOIN                              |                               |       |       |       |            |          |
+|  92 |                   BITMAP CONVERSION TO ROWIDS           |                               |   175 |  2100 |       |     1   (0)| 00:00:01 |
+|  93 |                    BITMAP INDEX FULL SCAN               | BX_DEVISE_IDNS                |       |       |       |            |          |
+|  94 |                   INDEX FAST FULL SCAN                  | AK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+|  95 |                  INDEX FAST FULL SCAN                   | PK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+|* 96 |                HASH JOIN                                |                               |   694 | 65236 |       |   708   (1)| 00:00:09 |
+|  97 |                 VIEW                                    | index$_join$_072              |  1691 | 25365 |       |    15   (7)| 00:00:01 |
+|* 98 |                  HASH JOIN                              |                               |       |       |       |            |          |
+|* 99 |                   HASH JOIN                             |                               |       |       |       |            |          |
+| 100 |                    BITMAP CONVERSION TO ROWIDS          |                               |  1691 | 25365 |       |     1   (0)| 00:00:01 |
+| 101 |                     BITMAP INDEX FULL SCAN              | BX_FONDS_IDNS                 |       |       |       |            |          |
+| 102 |                    INDEX FAST FULL SCAN                 | AK_FT_FONDS                   |  1691 | 25365 |       |    10   (0)| 00:00:01 |
+| 103 |                   INDEX FAST FULL SCAN                  | PK_FT_FONDS                   |  1691 | 25365 |       |     5   (0)| 00:00:01 |
+| 104 |                 NESTED LOOPS                            |                               |   711 | 56169 |       |   692   (1)| 00:00:09 |
+| 105 |                  NESTED LOOPS                           |                               |   729 | 54675 |       |   692   (1)| 00:00:09 |
+| 106 |                   VIEW                                  | VW_NSO_1                      |     1 |    13 |       |    30   (4)| 00:00:01 |
+| 107 |                    HASH UNIQUE                          |                               |     1 |     2 |       |    30   (4)| 00:00:01 |
+| 108 |                     COLLECTION ITERATOR PICKLER FETCH   | GETFONDSLIST                  |     1 |     2 |       |    29   (0)| 00:00:01 |
+| 109 |                   TABLE ACCESS BY INDEX ROWID           | FT_KTO                        |   729 | 45198 |       |   662   (0)| 00:00:08 |
+|*110 |                    INDEX RANGE SCAN                     | PK_FT_KTO                     |   729 |       |       |     4   (0)| 00:00:01 |
+|*111 |                  INDEX UNIQUE SCAN                      | PK_FT_FONDS                   |     1 |     4 |       |     0   (0)| 00:00:01 |
+|*112 |               INDEX UNIQUE SCAN                         | PK_FT_KTOPLAN                 |     1 |       |       |     1   (0)| 00:00:01 |
+| 113 |              TABLE ACCESS BY INDEX ROWID                | FT_KTOPLAN                    |     1 |    33 |       |     2   (0)| 00:00:01 |
+| 114 |         VIEW PUSHED PREDICATE                           | FV_KTO_STAND                  |     1 |    41 |       |     2   (0)| 00:00:01 |
+| 115 |          NESTED LOOPS                                   |                               |       |       |       |            |          |
+| 116 |           NESTED LOOPS                                  |                               |     1 |   182 |       |    68   (5)| 00:00:01 |
+| 117 |            NESTED LOOPS                                 |                               |     1 |   175 |       |    67   (5)| 00:00:01 |
+| 118 |             NESTED LOOPS OUTER                          |                               |     1 |   171 |       |    67   (5)| 00:00:01 |
+| 119 |              NESTED LOOPS                               |                               |     1 |   167 |       |    67   (5)| 00:00:01 |
+| 120 |               NESTED LOOPS OUTER                        |                               |     1 |   157 |       |    66   (5)| 00:00:01 |
+| 121 |                NESTED LOOPS                             |                               |     1 |   152 |       |    61   (5)| 00:00:01 |
+| 122 |                 NESTED LOOPS                            |                               |     1 |   141 |       |    60   (5)| 00:00:01 |
+| 123 |                  NESTED LOOPS                           |                               |     1 |   129 |       |    59   (6)| 00:00:01 |
+| 124 |                   MERGE JOIN                            |                               |     1 |    85 |       |    57   (6)| 00:00:01 |
+| 125 |                    SORT JOIN                            |                               |   189 | 11529 |       |    53   (4)| 00:00:01 |
+| 126 |                     MERGE JOIN CARTESIAN                |                               |   189 | 11529 |       |    52   (2)| 00:00:01 |
+| 127 |                      MERGE JOIN CARTESIAN               |                               |    27 |  1215 |       |    14   (8)| 00:00:01 |
+| 128 |                       MERGE JOIN CARTESIAN              |                               |     9 |   270 |       |     5  (20)| 00:00:01 |
+| 129 |                        SORT UNIQUE                      |                               |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*130 |                         INDEX RANGE SCAN                | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+| 131 |                        BUFFER SORT                      |                               |     3 |    45 |       |     3  (34)| 00:00:01 |
+| 132 |                         SORT UNIQUE                     |                               |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*133 |                          INDEX RANGE SCAN               | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 134 |                       BUFFER SORT                       |                               |     3 |    45 |       |    13   (8)| 00:00:01 |
+| 135 |                        SORT UNIQUE                      |                               |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*136 |                         INDEX RANGE SCAN                | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 137 |                      BUFFER SORT                        |                               |     7 |   112 |       |    51   (2)| 00:00:01 |
+| 138 |                       TABLE ACCESS FULL                 | FT_PERKAT                     |     7 |   112 |       |     1   (0)| 00:00:01 |
+|*139 |                    FILTER                               |                               |       |       |       |            |          |
+|*140 |                     SORT JOIN                           |                               |     1 |    24 |       |     4  (25)| 00:00:01 |
+| 141 |                      TABLE ACCESS BY INDEX ROWID        | FT_KTOSTAND                   |     1 |    24 |       |     3   (0)| 00:00:01 |
+|*142 |                       INDEX UNIQUE SCAN                 | PK_FT_KTOSTAND                |     1 |       |       |     2   (0)| 00:00:01 |
+|*143 |                   TABLE ACCESS BY INDEX ROWID           | FT_KTO                        |     1 |    44 |       |     2   (0)| 00:00:01 |
+|*144 |                    INDEX UNIQUE SCAN                    | PK_FT_KTO                     |     1 |       |       |     1   (0)| 00:00:01 |
+|*145 |                  TABLE ACCESS BY INDEX ROWID            | FT_FONDS                      |     1 |    12 |       |     1   (0)| 00:00:01 |
+|*146 |                   INDEX UNIQUE SCAN                     | PK_FT_FONDS                   |     1 |       |       |     0   (0)| 00:00:01 |
+|*147 |                 INDEX UNIQUE SCAN                       | PK_ST_FUNDOFSESSION           |     1 |    11 |       |     1   (0)| 00:00:01 |
+|*148 |                VIEW PUSHED PREDICATE                    | FVB_TRANCHE                   |     1 |     5 |       |     5   (0)| 00:00:01 |
+| 149 |                 NESTED LOOPS SEMI                       |                               |     2 |    78 |       |     5   (0)| 00:00:01 |
+| 150 |                  NESTED LOOPS                           |                               |     2 |    48 |       |     3   (0)| 00:00:01 |
+| 151 |                   TABLE ACCESS BY INDEX ROWID           | FT_TRANCHE                    |     1 |    13 |       |     2   (0)| 00:00:01 |
+|*152 |                    INDEX UNIQUE SCAN                    | PK_FT_TRANCHE                 |     1 |       |       |     1   (0)| 00:00:01 |
+|*153 |                   INDEX UNIQUE SCAN                     | PK_ST_FUNDOFSESSION           |     2 |    22 |       |     1   (0)| 00:00:01 |
+|*154 |                  INDEX RANGE SCAN                       | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*155 |               INDEX UNIQUE SCAN                         | IX_FT_KTOPLAN_IDKTO_IDNS      |     1 |    10 |       |     1   (0)| 00:00:01 |
+|*156 |              INDEX UNIQUE SCAN                          | PK_FT_LAND                    |     1 |     4 |       |     0   (0)| 00:00:01 |
+|*157 |             INDEX UNIQUE SCAN                           | PK_FT_DEVISE                  |     1 |     4 |       |     0   (0)| 00:00:01 |
+|*158 |            INDEX UNIQUE SCAN                            | PK_FT_DEVISE                  |     1 |       |       |     0   (0)| 00:00:01 |
+| 159 |           TABLE ACCESS BY INDEX ROWID                   | FT_DEVISE                     |     1 |     7 |       |     1   (0)| 00:00:01 |
+| 160 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+| 161 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 162 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 163 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 164 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 165 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*166 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 167 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*168 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*169 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 170 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*171 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*172 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 173 |       TABLE ACCESS BY INDEX ROWID                       | FT_KTOTEXT                    |     1 |    29 |       |     3   (0)| 00:00:01 |
+|*174 |        INDEX UNIQUE SCAN                                | PK_FT_KTOTEXT                 |     1 |       |       |     2   (0)| 00:00:01 |
+| 175 |       SORT AGGREGATE                                    |                               |     1 |    81 |       |            |          |
+| 176 |        NESTED LOOPS SEMI                                |                               |     1 |    81 |       |     9   (0)| 00:00:01 |
+| 177 |         NESTED LOOPS                                    |                               |     1 |    66 |       |     8   (0)| 00:00:01 |
+| 178 |          MERGE JOIN CARTESIAN                           |                               |     1 |    56 |       |     7   (0)| 00:00:01 |
+| 179 |           NESTED LOOPS SEMI                             |                               |     1 |    33 |       |     5   (0)| 00:00:01 |
+| 180 |            NESTED LOOPS                                 |                               |     1 |    18 |       |     4   (0)| 00:00:01 |
+|*181 |             INDEX RANGE SCAN                            | IX_FT_KTOPLAN_IDKTO_IDNS      |     1 |    10 |       |     3   (0)| 00:00:01 |
+|*182 |             INDEX FULL SCAN                             | PK_ST_OWNERSHIP               |     1 |     8 |       |     1   (0)| 00:00:01 |
+|*183 |            INDEX RANGE SCAN                             | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 184 |           BUFFER SORT                                   |                               |     1 |    23 |       |     6   (0)| 00:00:01 |
+| 185 |            TABLE ACCESS BY INDEX ROWID                  | FT_TEXT                       |     1 |    23 |       |     2   (0)| 00:00:01 |
+|*186 |             INDEX RANGE SCAN                            | AK_FT_TEXT                    |     1 |       |       |     1   (0)| 00:00:01 |
+|*187 |          TABLE ACCESS BY INDEX ROWID                    | ST_OWNERSHIP                  |     1 |    10 |       |     1   (0)| 00:00:01 |
+|*188 |           INDEX UNIQUE SCAN                             | PK_ST_OWNERSHIP               |     1 |       |       |     0   (0)| 00:00:01 |
+|*189 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 190 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+| 191 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 192 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 193 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 194 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 195 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*196 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 197 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*198 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*199 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 200 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*201 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*202 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 203 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+| 204 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 205 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 206 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 207 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 208 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*209 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 210 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*211 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*212 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 213 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*214 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*215 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 216 |       SORT AGGREGATE                                    |                               |     1 |    89 |       |            |          |
+| 217 |        NESTED LOOPS SEMI                                |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 218 |         NESTED LOOPS                                    |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 219 |          NESTED LOOPS                                   |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 220 |           NESTED LOOPS                                  |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 221 |            SORT UNIQUE                                  |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*222 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 223 |            TABLE ACCESS BY INDEX ROWID                  | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*224 |             INDEX UNIQUE SCAN                           | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*225 |           INDEX RANGE SCAN                              | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 226 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*227 |           INDEX UNIQUE SCAN                             | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*228 |         INDEX RANGE SCAN                                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 229 |       NESTED LOOPS OUTER                                |                               | 35614 |    71M|       |  4801   (1)| 00:00:58 |
+|*230 |        HASH JOIN                                        |                               |   122 |   244K|       |  4573   (1)| 00:00:55 |
+| 231 |         COLLECTION ITERATOR PICKLER FETCH               | GETFONDSLIST                  |     1 |     2 |       |    29   (0)| 00:00:01 |
+| 232 |         VIEW                                            |                               |   206K|   404M|       |  4542   (1)| 00:00:55 |
+|*233 |          HASH JOIN RIGHT SEMI                           |                               |   206K|    35M|       |  4542   (1)| 00:00:55 |
+|*234 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*235 |           HASH JOIN RIGHT SEMI                          |                               |   206K|    32M|       |  4539   (1)| 00:00:55 |
+|*236 |            INDEX RANGE SCAN                             | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*237 |            HASH JOIN                                    |                               |   206K|    29M|       |  4536   (1)| 00:00:55 |
+| 238 |             VIEW                                        | index$_join$_193              |   175 |  2100 |       |     5  (20)| 00:00:01 |
+|*239 |              HASH JOIN                                  |                               |       |       |       |            |          |
+|*240 |               HASH JOIN                                 |                               |       |       |       |            |          |
+| 241 |                BITMAP CONVERSION TO ROWIDS              |                               |   175 |  2100 |       |     1   (0)| 00:00:01 |
+| 242 |                 BITMAP INDEX FULL SCAN                  | BX_DEVISE_IDNS                |       |       |       |            |          |
+| 243 |                INDEX FAST FULL SCAN                     | AK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+| 244 |               INDEX FAST FULL SCAN                      | PK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+|*245 |             HASH JOIN                                   |                               |   206K|    26M|       |  4529   (1)| 00:00:55 |
+|*246 |              INDEX RANGE SCAN                           | PK_ST_FUNDOFSESSION           |  1691 | 18601 |       |    10   (0)| 00:00:01 |
+|*247 |              HASH JOIN                                  |                               |   206K|    24M|       |  4518   (1)| 00:00:55 |
+| 248 |               VIEW                                      | index$_join$_196              |  1691 | 25365 |       |    15   (7)| 00:00:01 |
+|*249 |                HASH JOIN                                |                               |       |       |       |            |          |
+|*250 |                 HASH JOIN                               |                               |       |       |       |            |          |
+| 251 |                  BITMAP CONVERSION TO ROWIDS            |                               |  1691 | 25365 |       |     1   (0)| 00:00:01 |
+| 252 |                   BITMAP INDEX FULL SCAN                | BX_FONDS_IDNS                 |       |       |       |            |          |
+| 253 |                  INDEX FAST FULL SCAN                   | AK_FT_FONDS                   |  1691 | 25365 |       |    10   (0)| 00:00:01 |
+| 254 |                 INDEX FAST FULL SCAN                    | PK_FT_FONDS                   |  1691 | 25365 |       |     5   (0)| 00:00:01 |
+|*255 |               HASH JOIN                                 |                               |   216K|    22M|    13M|  4501   (1)| 00:00:55 |
+| 256 |                INDEX FAST FULL SCAN                     | PK_GLMAP_FUNDACCOUNT_MATRIX   |   648K|  6329K|       |   647   (1)| 00:00:08 |
+|*257 |                HASH JOIN                                |                               |   180K|    17M|       |  2217   (1)| 00:00:27 |
+| 258 |                 SORT UNIQUE                             |                               |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*259 |                  INDEX RANGE SCAN                       | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+| 260 |                 TABLE ACCESS FULL                       | FT_KTOPLAN                    |   541K|    43M|       |  2212   (1)| 00:00:27 |
+| 261 |        VIEW PUSHED PREDICATE                            | FV_KTO_STAND                  |   291 | 11931 |       |     2   (0)| 00:00:01 |
+| 262 |         NESTED LOOPS                                    |                               |       |       |       |            |          |
+| 263 |          NESTED LOOPS                                   |                               |     1 |   182 |       |    68   (5)| 00:00:01 |
+| 264 |           NESTED LOOPS                                  |                               |     1 |   175 |       |    67   (5)| 00:00:01 |
+| 265 |            NESTED LOOPS OUTER                           |                               |     1 |   171 |       |    67   (5)| 00:00:01 |
+| 266 |             NESTED LOOPS                                |                               |     1 |   167 |       |    67   (5)| 00:00:01 |
+| 267 |              NESTED LOOPS OUTER                         |                               |     1 |   157 |       |    66   (5)| 00:00:01 |
+| 268 |               NESTED LOOPS                              |                               |     1 |   152 |       |    61   (5)| 00:00:01 |
+| 269 |                NESTED LOOPS                             |                               |     1 |   141 |       |    60   (5)| 00:00:01 |
+| 270 |                 NESTED LOOPS                            |                               |     1 |   129 |       |    59   (6)| 00:00:01 |
+| 271 |                  MERGE JOIN                             |                               |     1 |    85 |       |    57   (6)| 00:00:01 |
+| 272 |                   SORT JOIN                             |                               |   189 | 11529 |       |    53   (4)| 00:00:01 |
+| 273 |                    MERGE JOIN CARTESIAN                 |                               |   189 | 11529 |       |    52   (2)| 00:00:01 |
+| 274 |                     MERGE JOIN CARTESIAN                |                               |    27 |  1215 |       |    14   (8)| 00:00:01 |
+| 275 |                      MERGE JOIN CARTESIAN               |                               |     9 |   270 |       |     5  (20)| 00:00:01 |
+| 276 |                       SORT UNIQUE                       |                               |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*277 |                        INDEX RANGE SCAN                 | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+| 278 |                       BUFFER SORT                       |                               |     3 |    45 |       |     3  (34)| 00:00:01 |
+| 279 |                        SORT UNIQUE                      |                               |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*280 |                         INDEX RANGE SCAN                | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 281 |                      BUFFER SORT                        |                               |     3 |    45 |       |    13   (8)| 00:00:01 |
+| 282 |                       SORT UNIQUE                       |                               |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*283 |                        INDEX RANGE SCAN                 | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 284 |                     BUFFER SORT                         |                               |     7 |   112 |       |    51   (2)| 00:00:01 |
+| 285 |                      TABLE ACCESS FULL                  | FT_PERKAT                     |     7 |   112 |       |     1   (0)| 00:00:01 |
+|*286 |                   FILTER                                |                               |       |       |       |            |          |
+|*287 |                    SORT JOIN                            |                               |     1 |    24 |       |     4  (25)| 00:00:01 |
+| 288 |                     TABLE ACCESS BY INDEX ROWID         | FT_KTOSTAND                   |     1 |    24 |       |     3   (0)| 00:00:01 |
+|*289 |                      INDEX UNIQUE SCAN                  | PK_FT_KTOSTAND                |     1 |       |       |     2   (0)| 00:00:01 |
+|*290 |                  TABLE ACCESS BY INDEX ROWID            | FT_KTO                        |     1 |    44 |       |     2   (0)| 00:00:01 |
+|*291 |                   INDEX UNIQUE SCAN                     | PK_FT_KTO                     |     1 |       |       |     1   (0)| 00:00:01 |
+|*292 |                 TABLE ACCESS BY INDEX ROWID             | FT_FONDS                      |     1 |    12 |       |     1   (0)| 00:00:01 |
+|*293 |                  INDEX UNIQUE SCAN                      | PK_FT_FONDS                   |     1 |       |       |     0   (0)| 00:00:01 |
+|*294 |                INDEX UNIQUE SCAN                        | PK_ST_FUNDOFSESSION           |     1 |    11 |       |     1   (0)| 00:00:01 |
+|*295 |               VIEW PUSHED PREDICATE                     | FVB_TRANCHE                   |     1 |     5 |       |     5   (0)| 00:00:01 |
+| 296 |                NESTED LOOPS SEMI                        |                               |     2 |    78 |       |     5   (0)| 00:00:01 |
+| 297 |                 NESTED LOOPS                            |                               |     2 |    48 |       |     3   (0)| 00:00:01 |
+| 298 |                  TABLE ACCESS BY INDEX ROWID            | FT_TRANCHE                    |     1 |    13 |       |     2   (0)| 00:00:01 |
+|*299 |                   INDEX UNIQUE SCAN                     | PK_FT_TRANCHE                 |     1 |       |       |     1   (0)| 00:00:01 |
+|*300 |                  INDEX UNIQUE SCAN                      | PK_ST_FUNDOFSESSION           |     2 |    22 |       |     1   (0)| 00:00:01 |
+|*301 |                 INDEX RANGE SCAN                        | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+|*302 |              INDEX UNIQUE SCAN                          | IX_FT_KTOPLAN_IDKTO_IDNS      |     1 |    10 |       |     1   (0)| 00:00:01 |
+|*303 |             INDEX UNIQUE SCAN                           | PK_FT_LAND                    |     1 |     4 |       |     0   (0)| 00:00:01 |
+|*304 |            INDEX UNIQUE SCAN                            | PK_FT_DEVISE                  |     1 |     4 |       |     0   (0)| 00:00:01 |
+|*305 |           INDEX UNIQUE SCAN                             | PK_FT_DEVISE                  |     1 |       |       |     0   (0)| 00:00:01 |
+| 306 |          TABLE ACCESS BY INDEX ROWID                    | FT_DEVISE                     |     1 |     7 |       |     1   (0)| 00:00:01 |
+| 307 |     NESTED LOOPS SEMI                                   |                               |     1 |    48 |       |     4   (0)| 00:00:01 |
+| 308 |      TABLE ACCESS BY INDEX ROWID                        | FT_KTOPLAN                    |     1 |    33 |       |     3   (0)| 00:00:01 |
+|*309 |       INDEX UNIQUE SCAN                                 | PK_FT_KTOPLAN                 |     1 |       |       |     2   (0)| 00:00:01 |
+|*310 |      INDEX RANGE SCAN                                   | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 311 |     SORT AGGREGATE                                      |                               |     1 |    89 |       |            |          |
+| 312 |      NESTED LOOPS SEMI                                  |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 313 |       NESTED LOOPS                                      |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 314 |        NESTED LOOPS                                     |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 315 |         NESTED LOOPS                                    |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 316 |          SORT UNIQUE                                    |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*317 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 318 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*319 |           INDEX UNIQUE SCAN                             | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*320 |         INDEX RANGE SCAN                                | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 321 |        TABLE ACCESS BY INDEX ROWID                      | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*322 |         INDEX UNIQUE SCAN                               | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*323 |       INDEX RANGE SCAN                                  | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 324 |     NESTED LOOPS SEMI                                   |                               |     1 |    73 |       |     4   (0)| 00:00:01 |
+| 325 |      TABLE ACCESS BY INDEX ROWID                        | FT_KTOPLAN                    |     1 |    58 |       |     3   (0)| 00:00:01 |
+|*326 |       INDEX UNIQUE SCAN                                 | PK_FT_KTOPLAN                 |     1 |       |       |     2   (0)| 00:00:01 |
+|*327 |      INDEX RANGE SCAN                                   | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+| 328 |     SORT AGGREGATE                                      |                               |     1 |    89 |       |            |          |
+| 329 |      NESTED LOOPS SEMI                                  |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 330 |       NESTED LOOPS                                      |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 331 |        NESTED LOOPS                                     |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 332 |         NESTED LOOPS                                    |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 333 |          SORT UNIQUE                                    |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*334 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 335 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*336 |           INDEX UNIQUE SCAN                             | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*337 |         INDEX RANGE SCAN                                | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 338 |        TABLE ACCESS BY INDEX ROWID                      | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*339 |         INDEX UNIQUE SCAN                               | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*340 |       INDEX RANGE SCAN                                  | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 341 |     SORT AGGREGATE                                      |                               |     1 |    89 |       |            |          |
+| 342 |      NESTED LOOPS SEMI                                  |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 343 |       NESTED LOOPS                                      |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 344 |        NESTED LOOPS                                     |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 345 |         NESTED LOOPS                                    |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 346 |          SORT UNIQUE                                    |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*347 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 348 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*349 |           INDEX UNIQUE SCAN                             | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*350 |         INDEX RANGE SCAN                                | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 351 |        TABLE ACCESS BY INDEX ROWID                      | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*352 |         INDEX UNIQUE SCAN                               | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*353 |       INDEX RANGE SCAN                                  | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 354 |     SORT AGGREGATE                                      |                               |     1 |    89 |       |            |          |
+| 355 |      NESTED LOOPS SEMI                                  |                               |     1 |    89 |       |     8  (13)| 00:00:01 |
+| 356 |       NESTED LOOPS                                      |                               |     1 |    74 |       |     7  (15)| 00:00:01 |
+| 357 |        NESTED LOOPS                                     |                               |     1 |    47 |       |     6  (17)| 00:00:01 |
+| 358 |         NESTED LOOPS                                    |                               |     1 |    34 |       |     4  (25)| 00:00:01 |
+| 359 |          SORT UNIQUE                                    |                               |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*360 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+| 361 |          TABLE ACCESS BY INDEX ROWID                    | FT_KTOGSCHEMA                 |     1 |    19 |       |     1   (0)| 00:00:01 |
+|*362 |           INDEX UNIQUE SCAN                             | AK_FT_KTOGSCHEMA              |     1 |       |       |     0   (0)| 00:00:01 |
+|*363 |         INDEX RANGE SCAN                                | PK_FMT_KTOGOFKTO              |     2 |    26 |       |     2   (0)| 00:00:01 |
+| 364 |        TABLE ACCESS BY INDEX ROWID                      | FT_KTOGRUPPE                  |     1 |    27 |       |     1   (0)| 00:00:01 |
+|*365 |         INDEX UNIQUE SCAN                               | PK_FT_KTOGRUPPE               |     1 |       |       |     0   (0)| 00:00:01 |
+|*366 |       INDEX RANGE SCAN                                  | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 367 |     HASH UNIQUE                                         |                               |   209K|    65M|   113G|  1435M  (1)|999:59:59 |
+|*368 |      FILTER                                             |                               |       |       |       |            |          |
+|*369 |       HASH JOIN                                         |                               |   355M|   108G|       | 31574  (10)| 00:06:19 |
+| 370 |        COLLECTION ITERATOR PICKLER FETCH                | GETFONDSLIST                  |  8168 | 16336 |       |    29   (0)| 00:00:01 |
+|*371 |        HASH JOIN                                        |                               |    73M|    22G|       | 30038   (5)| 00:06:01 |
+| 372 |         COLLECTION ITERATOR PICKLER FETCH               | GETFONDSLIST                  |  8168 | 16336 |       |    29   (0)| 00:00:01 |
+|*373 |         HASH JOIN RIGHT SEMI                            |                               |    15M|  4698M|       | 29696   (4)| 00:05:57 |
+|*374 |          INDEX RANGE SCAN                               | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*375 |          HASH JOIN RIGHT SEMI                           |                               |    15M|  4480M|       | 29629   (4)| 00:05:56 |
+|*376 |           INDEX RANGE SCAN                              | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*377 |           HASH JOIN RIGHT SEMI                          |                               |    15M|  4261M|       | 29562   (4)| 00:05:55 |
+|*378 |            INDEX RANGE SCAN                             | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*379 |            HASH JOIN RIGHT SEMI                         |                               |    15M|  4043M|       | 29495   (3)| 00:05:54 |
+|*380 |             INDEX RANGE SCAN                            | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*381 |             HASH JOIN RIGHT SEMI                        |                               |    15M|  3825M|       | 29428   (3)| 00:05:54 |
+|*382 |              INDEX RANGE SCAN                           | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*383 |              HASH JOIN RIGHT SEMI                       |                               |    15M|  3607M|       | 29361   (3)| 00:05:53 |
+|*384 |               INDEX RANGE SCAN                          | PK_ST_PRIVOFSESS              |     6 |    90 |       |     2   (0)| 00:00:01 |
+|*385 |               HASH JOIN RIGHT SEMI                      |                               |    15M|  3389M|       | 29294   (3)| 00:05:52 |
+|*386 |                INDEX RANGE SCAN                         | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*387 |                HASH JOIN RIGHT SEMI                     |                               |    15M|  3170M|       | 29227   (3)| 00:05:51 |
+|*388 |                 INDEX RANGE SCAN                        | PK_ST_PRIVOFSESS              |     3 |    45 |       |     2   (0)| 00:00:01 |
+|*389 |                 HASH JOIN                               |                               |    15M|  2952M|       | 29160   (2)| 00:05:50 |
+|*390 |                  INDEX RANGE SCAN                       | PK_ST_FUNDOFSESSION           |  1691 | 18601 |       |    10   (0)| 00:00:01 |
+|*391 |                  HASH JOIN                              |                               |    15M|  2792M|       | 29085   (2)| 00:05:50 |
+| 392 |                   VIEW                                  | index$_join$_287              |   175 |  2100 |       |     5  (20)| 00:00:01 |
+|*393 |                    HASH JOIN                            |                               |       |       |       |            |          |
+|*394 |                     HASH JOIN                           |                               |       |       |       |            |          |
+| 395 |                      BITMAP CONVERSION TO ROWIDS        |                               |   175 |  2100 |       |     1   (0)| 00:00:01 |
+| 396 |                       BITMAP INDEX FULL SCAN            | BX_DEVISE_IDNS                |       |       |       |            |          |
+| 397 |                      INDEX FAST FULL SCAN               | AK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+| 398 |                     INDEX FAST FULL SCAN                | PK_FT_DEVISE                  |   175 |  2100 |       |     1   (0)| 00:00:01 |
+|*399 |                   HASH JOIN RIGHT OUTER                 |                               |    15M|  2618M|       | 29015   (2)| 00:05:49 |
+|*400 |                    TABLE ACCESS FULL                    | FT_TRANCHE                    |    59 |   354 |       |    71   (0)| 00:00:01 |
+|*401 |                    HASH JOIN                            |                               |    15M|  2530M|       | 28878   (2)| 00:05:47 |
+| 402 |                     TABLE ACCESS FULL                   | FT_FONDS                      |  1691 | 32129 |       |    19   (0)| 00:00:01 |
+|*403 |                     HASH JOIN                           |                               |    15M|  2254M|       | 28794   (1)| 00:05:46 |
+|*404 |                      TABLE ACCESS FULL                  | VWM_AIS_FUND_HIERARCHY_MATRIX | 10062 |   167K|       |   106   (1)| 00:00:02 |
+| 405 |                      NESTED LOOPS OUTER                 |                               |  2456K|   323M|       | 28623   (1)| 00:05:44 |
+|*406 |                       HASH JOIN                         |                               |  2456K|   309M|       | 28619   (1)| 00:05:44 |
+| 407 |                        TABLE ACCESS FULL                | CUST_LINEITEM                 |  8480 | 84800 |       |   102   (0)| 00:00:02 |
+|*408 |                        HASH JOIN                        |                               |  2456K|   285M|  2880K| 28506   (1)| 00:05:43 |
+|*409 |                         TABLE ACCESS FULL               | CUST_GLMAPPING                | 63990 |  2124K|       |   377   (1)| 00:00:05 |
+|*410 |                         HASH JOIN                       |                               |  3248K|   272M|       | 12602   (2)| 00:02:32 |
+| 411 |                          TABLE ACCESS FULL              | FT_KTOGRUPPE                  | 84978 |   746K|       |   346   (1)| 00:00:05 |
+|*412 |                          HASH JOIN                      |                               |  3248K|   244M|       | 12241   (2)| 00:02:27 |
+| 413 |                           VIEW                          | index$_join$_303              |     6 |    42 |       |     5  (20)| 00:00:01 |
+|*414 |                            HASH JOIN                    |                               |       |       |       |            |          |
+| 415 |                             INDEX FAST FULL SCAN        | PK_FT_KTOGSCHEMA              |     6 |    42 |       |     1   (0)| 00:00:01 |
+| 416 |                             INDEX FAST FULL SCAN        | AK_FT_KTOGSCHEMA              |     6 |    42 |       |     4   (0)| 00:00:01 |
+|*417 |                           HASH JOIN                     |                               |  3248K|   223M|    36M| 12222   (1)| 00:02:27 |
+|*418 |                            HASH JOIN                    |                               |   541K|    30M|  3240K|  4094   (2)| 00:00:50 |
+| 419 |                             TABLE ACCESS FULL           | FT_KTOGRUPPE                  | 84978 |  2240K|       |   346   (1)| 00:00:05 |
+|*420 |                             HASH JOIN                   |                               |   541K|    16M|       |  2457   (2)| 00:00:30 |
+| 421 |                              TABLE ACCESS BY INDEX ROWID| FT_KTOGSCHEMA                 |     1 |    19 |       |     3   (0)| 00:00:01 |
+|*422 |                               INDEX RANGE SCAN          | AK_FT_KTOGSCHEMA              |     1 |       |       |     2   (0)| 00:00:01 |
+| 423 |                              TABLE ACCESS FULL          | FMT_KTOGOFKTO                 |  3248K|    40M|       |  2440   (2)| 00:00:30 |
+| 424 |                            TABLE ACCESS FULL            | FMT_KTOGOFKTO                 |  3248K|    40M|       |  2440   (2)| 00:00:30 |
+| 425 |                       VIEW PUSHED PREDICATE             | CUST_FVB_LINEITEM             |     1 |     6 |       |     0   (0)| 00:00:01 |
+| 426 |                        NESTED LOOPS SEMI                |                               |     1 |    29 |       |     3   (0)| 00:00:01 |
+|*427 |                         TABLE ACCESS BY INDEX ROWID     | CUST_LINEITEM                 |     1 |    14 |       |     2   (0)| 00:00:01 |
+|*428 |                          INDEX UNIQUE SCAN              | PK_CUST_LINEITEM              |     1 |       |       |     1   (0)| 00:00:01 |
+|*429 |                         INDEX RANGE SCAN                | PK_ST_PRIVOFSESS              |     6 |    90 |       |     1   (0)| 00:00:01 |
+| 430 |       NESTED LOOPS SEMI                                 |                               |     1 |    48 |       |     4   (0)| 00:00:01 |
+| 431 |        TABLE ACCESS BY INDEX ROWID                      | FT_KTOPLAN                    |     1 |    33 |       |     3   (0)| 00:00:01 |
+|*432 |         INDEX UNIQUE SCAN                               | PK_FT_KTOPLAN                 |     1 |       |       |     2   (0)| 00:00:01 |
+|*433 |        INDEX RANGE SCAN                                 | PK_ST_PRIVOFSESS              |     3 |    45 |       |     1   (0)| 00:00:01 |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+

@@ -1,0 +1,70 @@
+#!/usr/bin/env perl
+# 
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use Getopt::Long;
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+main();
+
+sub main {
+
+        use vars qw ( $keep_num_days $IsHelp );
+
+        GetOptions ( 'keep_num_days=s' => \$keep_num_days,
+                     'help' => \$IsHelp );
+
+
+        if ( defined $IsHelp ) {
+                print_help();
+                exit;
+        }
+
+        if ( !defined $keep_num_days ) {
+                $keep_num_days = 7;
+        }
+
+        ArrangeTask( $keep_num_days );
+}
+
+
+
+sub ArrangeTask {
+    my $keep_num_days = shift;
+
+    my @listDatabases = Db::CONFIG::getDbList();
+
+ 
+    foreach my $dbname ( @listDatabases ) {
+        
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        next if $dbname !~ /INST|RET|LDFX|TKFX/;
+
+        my $config = new Db::CONFIG( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+           $_  = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/purge_stp_events.sql $keep_num_days" );
+           $_  =~ s/deleted/purged/; 
+        
+       
+        my $subject = "STP Event Purge on $dbname - ( " . Util::UTIL::getDateStr() . ' ) ';
+
+
+        Util::UTIL::SendAlert ( 'HTML' , 'DBA' , $subject , $_);
+    }
+}
+
+
+
+
+

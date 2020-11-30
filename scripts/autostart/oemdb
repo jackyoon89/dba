@@ -1,0 +1,17 @@
+#!/bin/sh
+
+export ORACLE_HOME=/home/app/oracle/product/db/12.1.0.2
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
+export PATH=$ORACLE_HOME/bin:$PATH
+
+ORA_OWNER=oracle
+
+case "$1" in
+'start')
+    su $ORA_OWNER -c "$ORACLE_HOME/bin/dbstart $ORACLE_HOME"
+    ;;
+'stop')
+    su $ORA_OWNER -c "$ORACLE_HOME/bin/dbshut $ORACLE_HOME"
+    ;;
+esac
+

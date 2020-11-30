@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+# 
+# index_usage_report
+#
+# Produce a weekly Index usage Report
+#
+# jyoon		2011/10/17 - Created 
+#
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+#use DBI;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $html = '';
+
+
+main();
+
+sub main {
+    index_usage_report();
+}
+
+
+sub index_usage_report {
+
+    my @databases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+  
+	my $config = new Db::CONFIG   ( $dbname );
+
+	if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing 
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+       
+        $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/index_usage_report.sql" );
+
+
+	$html  = "<FONT SIZE=\"2\" FACE=\"Arial\">\n" .
+            	 "<H3>Index Usage Report</H3>\n" .
+            	 "<LI><B>Database : $dbname</B>\n" .
+                 "<br>\n" .
+            	 "<FONT FACE=\"Arial\" SIZE=\"2\">\n" .
+            	 "<TABLE BORDER=1 CELLPADDING=5>\n" .
+                 "<TR>\n" .
+             	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>OWNER</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>TABLE_NAME</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>INDEX_NAME</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#CCCC99\"><FONT FACE=\"Arial\" SIZE=\"2\"><B>USAGE</B></FONT></TD>\n" .
+            	 "</TR>\n";
+ 
+        $html .= $_;
+
+	SendReport( $dbname );	
+    }
+}
+
+
+
+sub SendReport {
+
+        my $dbname = shift;
+	my $subject = "Weekly Index Usage Report( $dbname ) - " . Util::UTIL::getDateStr() . ' ) ';
+
+	# The email recepient must include tradeops when it is deployed on the production.
+	Util::UTIL::SendAlert ( 'HTML' , 'REPORTING' , $subject , $html );
+
+}
+

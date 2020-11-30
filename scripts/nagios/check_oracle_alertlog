@@ -1,0 +1,136 @@
+#!/usr/bin/perl -w 
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+my $GREP = '/bin/grep';
+my $TAIL = '/usr/bin/tail';
+
+
+main();
+
+
+sub main {
+
+    my $msg = '';
+
+    getopts('d:');
+
+    if ( !defined $opt_d ) {
+        print "Check errors from the alert_SID.log file plugin.\n\n";
+	print "Usage : check_oracle_alertlog -d DB_NAME\n";
+
+	exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    # Set Unique Database name
+    my $dh     = new Db::DATABASE( uc $opt_d );
+
+    my $config = new Db::CONFIG( uc $opt_d );
+    my $sid    = $config->getOraSid();
+
+    # 2015/07/29 : jyoon - regular expression added to identify 12c version 
+    my $logfile='';
+    if ( $config->getOraHome() =~ /\/12/ ) {
+        #$logfile = $dh->getParameter('diagnostic_dest') . '/diag/rdbms/' . lc($opt_d)  . '/' . uc($opt_d) . "/trace/alert_$sid.log";
+        # 2017/02/15 - jyoon : Changed to use db_unique_nme 
+        $logfile = $dh->getParameter('diagnostic_dest') . '/diag/rdbms/' . lc($dh->getParameter('db_unique_name'))  . '/' . uc($sid) . "/trace/alert_$sid.log";
+    } else {
+        $logfile = $dh->getParameter('background_dump_dest') . "/alert_$sid.log";
+    }
+
+
+    $msg .= checkError( $logfile );		
+
+    print $msg;
+
+    exit $ERRORS{'CRITICAL'} if ( $msg =~ /ORA-/ );
+
+    exit $ERRORS{'OK'};
+	
+}
+
+sub checkError {
+	my $logfile = $_[0];
+
+	my $error_msg;
+
+	my ( $OldNumErrors, $NewNumErrors ) = ( 0 , 0 );
+
+	my ($sid) = $logfile =~ /\w*alert_(\w*).log/;
+	
+
+	$OldNumErrors =	getLastNumErrors( $sid );  
+
+	$NewNumErrors = getCurNumErrors ( $logfile ); 
+
+	
+	if ( $NewNumErrors != $OldNumErrors ) {
+
+		$error_msg = `$GREP ORA- $logfile |$GREP -v ORA-609|$TAIL -1`;
+		
+		chomp $error_msg;
+
+		writeCurNumErrors ( $sid , $NewNumErrors );
+
+		return $error_msg;
+	} 
+
+	return "No errors found";
+}
+
+sub writeCurNumErrors {
+
+	my ($error_file , $num_errors ) = ("errors_$_[0]", $_[1] );
+
+	open NUM_ERRORS , ">/tmp/$error_file" or die "Can not open the file $error_file.\n";
+
+	print NUM_ERRORS $num_errors;
+
+	close NUM_ERRORS;
+}
+
+sub getCurNumErrors {
+	my $logfile = $_[0];
+
+	return `$GREP -c ORA- $logfile`;
+	
+}
+
+sub getLastNumErrors {
+
+	my $error_file = "errors_$_[0]";
+	my $errors;
+
+	if ( -f "/tmp/$error_file" ) {
+		open NUM_ERRORS , "/tmp/$error_file" or die "Can not open the file $error_file.\n";
+		
+		$errors = <NUM_ERRORS>;	
+	
+		close NUM_ERRORS;
+	} else {
+		$errors = 0;
+	}
+
+	return $errors;
+}
+
+
+

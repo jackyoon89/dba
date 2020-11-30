@@ -1,0 +1,62 @@
+#!/usr/bin/perl -w 
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Db::CONFIG;
+use Db::DATABASE;
+use Getopt::Std;
+
+
+my $PS   = '/bin/ps';
+my $GREP = '/bin/grep';
+my $AWK  = '/bin/awk';
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+
+main();
+
+sub main {
+
+    my $msg = 'Oracle Instance ';
+	
+    getopts('d:');
+
+    if ( !defined $opt_d ) {
+        print "Oracle Instance monitoring plugin.\n\n";
+	print "Usage: check_oracle_instance -d DB_NAME\n";
+		
+	return $ERRORS{'UNKNOWN'};
+    }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    my $config = new Db::CONFIG( uc $opt_d );
+    my $instance = $config->getOraSid();
+
+    if ( `$PS -ef|$GREP -v grep |$GREP -c ora_pmon_$instance ` >= 1 ) {
+    
+        $msg .= $instance . '(UP)';
+    } else {
+        $msg .= $instance . '(DOWN)';
+    }
+
+    print $msg;
+
+    exit $ERRORS{'CRITICAL'} if ( $msg =~ /DOWN/ );
+
+    exit $ERRORS{'OK'};
+	
+	
+
+}
+

@@ -1,0 +1,52 @@
+#!/usr/bin/perl -w
+# $Header: /home/app/oracle/admin/DBA/crontab/report/system_stat.pl,v 1.0  2007/01/17 jyoon Exp $
+# 
+# system_stat.pl
+# 
+# Jack Yoon	02/20/2007 - Added Analyze Table Statistics for WHITNEY
+# Jack Yoon	01/17/2007 - Created 
+#
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+
+RunReport();
+
+# -------------------------------------------------------------------------------
+# Name   : RunReport 
+# Purpose: This routine runs both system and database stat.
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub RunReport {
+	my $htmlStr = '';
+	my $subject = '';
+
+	my $config = new Db::CONFIG();
+
+	$config->setDbEnv();
+
+	my $REPORT_DIR = "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts";
+
+
+	$htmlStr  = '<HTML><HEAD><META HTTP-EQUIV=\"Expires\" CONTENT=\"Mon, 06 Jan 1990 00:00:01 GMT\">';
+        $htmlStr .= '<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\"></HEAD>';
+ 
+	$htmlStr .= `$REPORT_DIR/report/system_stat.pl`;
+
+	$htmlStr .= `$REPORT_DIR/report/database_stat.pl`;
+	$htmlStr .= "</BODY></HTML>";
+
+	$subject  = Util::UTIL::getHostname();
+	$subject .= ' Daily Report - ';
+	$subject .= Util::UTIL::getDateStr();
+
+	Util::UTIL::SendAlert( 'HTML',  'DBA' , $subject , $htmlStr );
+
+        open ( FILE , ">$REPORT_DIR/log/report.html" ) or die "Cannot open the file $REPORT_DIR/logs/report.html.\n";
+
+        print FILE $htmlStr;
+
+        close FILE;
+
+}

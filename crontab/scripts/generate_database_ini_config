@@ -1,0 +1,8 @@
+#!/bin/ksh
+
+SCRIPT_BASE=/home/app/oracle/admin/DBA
+SCRIPT_DIR=$SCRIPT_BASE/scripts/utility
+DATABASE_CONF_DIR=$SCRIPT_BASE/config
+
+/usr/bin/python $SCRIPT_DIR/database_ini_config.py > $DATABASE_CONF_DIR/database.ini
+

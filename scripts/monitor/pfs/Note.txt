@@ -1,0 +1,3 @@
+alter system set commit_write=nowait,batch;
+alter session set commit_write=nowait,batch;
+

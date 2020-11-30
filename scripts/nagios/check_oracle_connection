@@ -1,0 +1,74 @@
+#!/usr/bin/perl -w  
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	
+    getopts('d:');
+
+    if (!defined $opt_d ) {
+        print "Oracle Connectivity monitoring plugin.\n\n";
+        print "Usage : check_oracle_connection -d DB_NAME\n";
+
+        exit $ERRORS{'UNKNOWN'}; }
+
+    if ( Util::UTIL::isMonitor( $opt_d ) =~ /No/ ) {
+        print "Database Monitoring suspended for maintenance. - OK";
+        exit $ERRORS{'OK'};
+    }
+
+    $_ =  checkConnection( uc $opt_d );
+
+
+    if ( $_ =~ /^X|X$/ ) {
+        print "Database Connection OK - Can make new connections.";
+        exit $ERRORS{'OK'};
+    } else {
+        print "Database Connection CRITICAL - Cannot make a new connection.";
+        exit $ERRORS{'CRITICAL'};
+    }
+  
+}
+
+sub checkConnection {
+    my ($database, $result) = ( @_, '');
+
+    my $config = new Db::CONFIG ( $database );
+
+    if ($config->isStandby() =~ /yes/i) {
+        print "Database connect OK - Standby Database.";
+        exit $ERRORS{'OK'};
+    }
+
+    my $dh = new Db::DATABASE( $database ); 
+    $_ = $dh->runSQL2( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/scripts/nagios/sql/dual.sql" );
+
+    @_ = split ('\n', $_ );
+
+    foreach ( @_ ) {
+        if ( $_ =~ /^$/ ) {
+            next;
+        }
+        $result = $_;
+    }
+    return $result;
+}
+
+
+
+

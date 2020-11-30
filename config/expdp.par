@@ -1,0 +1,5 @@
+directory=EXPDP_DIR
+full=y
+parallel=8
+compression=ALL
+consistent=Y 

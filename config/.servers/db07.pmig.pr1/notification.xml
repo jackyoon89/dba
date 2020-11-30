@@ -1,0 +1,11 @@
+<?xml version='1.0'?>
+<notification>
+    <mailhost>mail</mailhost>
+    <mailfrom>oracle@db07.pmig.pr1</mailfrom>
+    <group>
+       <dba>oracleDBA@eexchange.com,mli@pfs.com,sma@globallink.com</dba>
+       <techops>oracleDBA@eexchange.com</techops>
+       <tradeops>oracleDBA@eexchange.com</tradeops>
+       <compliance>oracleDBA@eexchange.com</compliance>
+    </group>
+</notification>

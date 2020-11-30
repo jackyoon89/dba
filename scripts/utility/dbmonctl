@@ -1,0 +1,147 @@
+#!/usr/bin/env perl
+# 
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use Getopt::Long;
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $statusFile    = "/tmp/.dbmonctl";
+my (@current_db_status, @new_db_status) = ();
+
+if (! -f $statusFile ) {
+    system("/bin/touch $statusFile");
+} 
+
+main();
+
+sub main {
+
+    use vars qw ( $d_database $e_database $IsHelp $IsStatus );
+
+    GetOptions ( 'disable=s' => \$d_database,
+                 'enable=s' => \$e_database,
+                 'status' => \$IsStatus,
+                 'help' => \$IsHelp );
+
+
+    if ( defined $IsHelp || (!defined $d_database && !defined $e_database && !defined $IsStatus)) {
+        print_help();
+        exit;
+    } 
+   
+    @current_db_status = split("\n", Util::UTIL::getFileContents($statusFile));
+
+    set_db_status();
+
+    if ( $IsStatus ) {
+        check_status() if ( defined $IsStatus );
+        Util::UTIL::setFileContents ( $statusFile , join("\n",@current_db_status) );
+        exit;
+    } 
+    
+    set_db_monitoring( uc $d_database , "No" ) if ( $d_database );
+
+    set_db_monitoring( uc $e_database , "Yes" ) if ( $e_database );
+
+    Util::UTIL::setFileContents ( $statusFile , join("\n",@current_db_status) );
+}
+
+
+
+sub set_db_monitoring {
+
+    my ($list , $status) = @_;
+    my @listDatabases = ();
+
+    print "Set Monitor = $status for database(s), $list\n";
+    
+    if ( $list eq "ALL" ) {                                # All databases
+        #print "All Database\n";
+        foreach my $line (@current_db_status) {
+            ($_) = split(':', $line);
+            push( @listDatabases, $_ );                     # Build @listDatabases in case ALL 
+        }
+    } else { 
+        #print "List Database\n";
+        @listDatabases = split(',', $list );                # Build @listDatabases from $list
+    }
+
+    foreach my $line (@current_db_status) {                 # For every line of the status file(/tmp/.dbmonctl).
+        my $is_database = 0;                                # set $is_database = 0(meaning no database found.)
+        foreach my $dbname ( @listDatabases ) {             # check every element of @listDatabases
+            @_ = split(':',$line);
+            if ( $_[0] eq "$dbname" ) {                     # if $dbname matches the 
+                $is_database = 1;                           # database found
+                push( @new_db_status , "$dbname:$status");  # push $dbname:$status into @new_db_status array
+            }
+        }
+        push( @new_db_status, $line ) if ( $is_database == 0 );  # if database is not found then save original line
+    } 
+
+    @current_db_status = @new_db_status;
+    @new_db_status = ();
+}
+
+sub set_db_status {
+    my @listDatabases = Db::CONFIG::getDbList();
+
+    foreach my $dbname ( @listDatabases ) {
+
+        next if ( $dbname =~ /\+ASM/ );
+
+        # By default: false
+        my $is_database = 0;
+
+        foreach my $line ( @current_db_status ) {
+            $is_database = 1 if ( $line =~ /$dbname/ );                       # if database fund then set is_database value
+        }        
+        push( @current_db_status , "$dbname:Yes" ) if ( $is_database == 0 );  # otherwise add the database with default value
+        
+    }
+}
+
+sub check_status {
+    my @listDatabases = Db::CONFIG::getDbList();
+
+    print "\nDatabase Monitoring status \n";
+
+    foreach my $dbname ( @listDatabases ) {
+
+        foreach my $line ( @current_db_status ) {
+            @_ = split(':',$line);             # split dbname from "dbname:status"
+            if ( $_[0] eq "$dbname" ) { 
+                print "  $_[0] \t  $_[1]  \n"; # print dbname and status
+            }
+        }
+    }
+    print "\n";
+}
+
+
+sub print_help {
+
+    print "
+Database Monitoring Control utility
+
+NAME
+       dbmonctl - database monitoring control utility
+
+SYNOPSIS
+       dbmonctl [OPTION] [database|ALL]
+
+DESCRIPTION
+       --enable=database1[, database2, ...][ALL]
+                enable monitoring of the database(s) through crontab or nagios
+    
+       --disable=database1[, database2, ...][ALL]
+                disable monitoring of the database(s) through crontab or nagios
+
+       --status
+                display the monitoring status of database(s)s list in the database.ini file.
+\n"
+}

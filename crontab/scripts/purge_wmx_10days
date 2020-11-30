@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+# 
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+#use DBI;
+use Getopt::Long;
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+main();
+
+sub main {
+
+        use vars qw ( $keep_num_days $IsHelp );
+
+        GetOptions ( 'keep_num_days=s' => \$keep_num_days,
+                     'help' => \$IsHelp );
+
+
+        if ( defined $IsHelp ) {
+                print_help();
+                exit;
+        }
+
+        if ( !defined $keep_num_days ) {
+                $keep_num_days = 9;
+        }
+
+        ArrangeTask( $keep_num_days );
+}
+
+
+
+sub ArrangeTask {
+    my $keep_num_days = shift;
+
+    my @listDatabases = Db::CONFIG::getDbList();
+
+ 
+    foreach my $dbname ( @listDatabases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+        
+        next if ( $dbname !~ /WMX/ );
+
+
+        my $config = new Db::CONFIG( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+           $_  = $dh->runSQL_by_internal( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/purge_wmx_10days.sql $dbname $keep_num_days" );
+           $_  =~ s/deleted/purged/; 
+        
+     
+        my $subject = "WMX QUOTESNAP Purged on $dbname - ( " . Util::UTIL::getDateStr() . ' ) ';
+
+
+        Util::UTIL::SendAlert ( 'TEXT' , 'FX_RATES' , $subject , $_);
+    }
+}
+

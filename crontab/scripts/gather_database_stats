@@ -1,0 +1,70 @@
+#!/usr/bin/perl -w
+# $Header: /home/app/oracle/admin/dba/crontab/monitor/mom1d.pl,v 1.0  2006/12/10 jyoon Exp $
+# 
+# mon1d.pl 
+#
+# jyoon		12/03/2008 - Started using Sys::SYSTEM & Db::CONFIG package
+# jyoon		02/20/2007 - Add Trade_id Comparision
+# jyoon		12/10/2006 - Created with Check Tablespace Usage and Alert function
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+
+
+
+ArrangeAnalyzeSchema();
+
+# -------------------------------------------------------------------------------
+# Name   : MonTblspUsage
+# Purpose: Check tablespace usage
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub ArrangeAnalyzeSchema {
+
+    foreach my $dbname ( Db::CONFIG::getDbList() ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $config = new Db::CONFIG   ( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing 
+            next;                                                               # if it's Standby or ASM
+        }
+
+        $config->setDbEnv();
+        my $userinfo = $config->getSysUser();
+   
+        AnalyzeSchema($dbname, $userinfo);
+
+    }
+}
+
+# -------------------------------------------------------------------------------
+# Name   : AnalyzeSchema
+# Purpose: Gather schema status 
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub AnalyzeSchema {
+        my ( $dbname, $userinfo ) = @_;
+	my ( $subject , $payload ) = ( '', '' );
+        my $hostname = `/bin/hostname`;
+	my $script_home = "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts";
+        chomp($hostname);
+
+
+        system( "$ENV{ORACLE_HOME}/bin/sqlplus \-s $userinfo\@$hostname/$dbname \@$script_home/sql/gather_database_stats.sql $script_home > /dev/null 2>&1" );	
+
+        $payload = Util::UTIL::getFileContents( "$script_home/log/gather_database_stats.log" );
+	$payload =~ s/(\n)+PL\/SQL procedure successfully completed.(\n)+//g;
+	$payload =~ s/Elapsed:\s*(\d+):(\d+):(\d+).(\d+)/ $1:$2:$3.$4\n/g;
+
+        $subject = "Database Analyzed : ( $dbname ) - " . Util::UTIL::getDateStr();
+
+        Util::UTIL::SendAlert ( 'TEXT', 'DBA', $subject , $payload );
+}
+
+
+

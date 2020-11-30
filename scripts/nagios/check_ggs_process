@@ -1,0 +1,85 @@
+#!/usr/bin/perl -w 
+#
+# jyoon 09/13/2007 Created
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+
+use vars qw ( $opt_m $opt_e $opt_p $opt_r );
+
+$ENV{GGS_HOME}="/home/ggs/product/12.1.2.1";
+
+my $ECHO="/bin/echo";
+my $GREP="/bin/grep -i";
+my $AWK="/usr/bin/awk";
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+	my $msg = '';
+
+        #my $config = new Db::CONFIG();
+
+	getopts('m:e:p:r:');
+
+
+        if ( (defined $opt_m) + (defined $opt_e) + (defined $opt_p) + (defined $opt_r ) !=  1 ) {
+
+		print "Goldengate Monitoring Plugin.\n\n";
+		print "Usage : check_ggs_process [-m MANAGER] [-e EXTRACT_NAME] [-p PUMP_NAME] [-r REPLICAT_NAME]\n";
+
+		return $ERRORS{'UNKNOWN'};
+	}
+
+        SWITCH: {
+            defined $opt_m &&  do {
+                               $msg = CheckGGS( 'MANAGER' , $opt_m );
+                           };
+            defined $opt_e && do {
+                               $msg = CheckGGS( 'EXTRACT' , $opt_e );
+                           };
+            defined $opt_p && do {
+                               $msg = CheckGGS( 'EXTRACT' , $opt_p );
+                           };
+            defined $opt_r && do {
+                               $msg = CheckGGS( 'REPLICAT' , $opt_r );
+                           };
+        }
+
+        print $msg;
+
+        if ( $msg =~ /RUNNING/i ) {
+            exit $ERRORS{'OK'};
+        } else {
+            exit $ERRORS{'CRITICAL'};
+        }
+
+}
+
+
+sub CheckGGS {
+    my ( $process_type , $process_name, $msg ) = @_;
+
+    if ( $process_type =~ /MANAGER/ ) {
+        $msg = `. $ENV{HOME}/.bash_profile; $ECHO "info all"|$ENV{GGS_HOME}/ggsci| $GREP $process_type | \
+                $GREP $process_name| $AWK '{ print \$1"("\$2")"}'`;
+    } else {
+        $msg = `. $ENV{HOME}/.bash_profile; $ECHO "info all"|$ENV{GGS_HOME}/ggsci| $GREP $process_type | \
+               $GREP $process_name| $AWK '{ print \$3"("\$2")"}'`;
+    }
+
+    if ($msg =~ /^$/ ) {
+        $msg = "$process_type $process_name does not exist.";
+    }
+
+    return $msg;
+}
+

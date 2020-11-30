@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+#
+# check_oracle_logfile_size
+#
+# 
+# 2014/05/14	jyoon	Created
+#
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+
+use vars qw ( $opt_s );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+
+main();
+
+sub main {
+ 
+    getopts( 's:' );
+	
+#    if ( !defined $opt_s ) {
+#        print "Log file size check plugin.\n" .
+#              "Status : Normal if not find any files >= VAL\n" .
+#              "         Warning if it find any files >= VAL\n\n" .
+#              "Usage : check_oracle_logfile_size -s VAL(K|M(default))\n\n";
+#        exit $ERRORS{'UNKNOWN'}
+#    }
+
+    $opt_s = "100" if (!defined $opt_s );
+
+    # attach postfix(k) if not exits
+    $opt_s = lc $opt_s;
+
+    if ( $opt_s !~ /(k|m)$/ ) {
+        $opt_s .= 'M';
+    }
+
+
+    #my $config = new Db::CONFIG();
+
+    my $FIND  = "/usr/bin/find";
+    my $XARGS = "/usr/bin/xargs";
+    my $LS    = "/bin/ls";
+    my $AWK   = "/usr/bin/awk";
+    my $GREP  = "/bin/grep";
+
+
+    #my $cmd = "$FIND $ENV{ORACLE_BASE} -regex \"^.*\\(alert\\|listener\\|_ora_\\).*\\(trc\\|log\\)\$\" -size +$warning -print";
+    my $cmd       = "$FIND /home/app/grid -regex \"^.*\\.\\(trc\\|log\\|\\)\$\" -size +$opt_s -print";
+    my $listFiles = `$cmd|$XARGS -n1 $LS -l |$AWK '{ print \$9" ("\$5")"}'|$GREP ^/`;
+
+    if ( $listFiles ) {
+        print "Log files Size : $listFiles - WARNING";	
+        exit $ERRORS{'WARNING'};
+    } else {
+        print "Log files Size : No large log files - OK";
+        exit $ERRORS{'OK'};
+    }
+}
+
+
+

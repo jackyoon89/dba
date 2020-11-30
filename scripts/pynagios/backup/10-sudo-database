@@ -1,0 +1,13 @@
+# File managed by Puppet
+
+
+Cmnd_Alias	DATABASE= /usr/lib/nagios/plugins/check_db_perms, /usr/lib/nagios/plugins/check_oracle_connection.py, /usr/lib/nagios/plugins/check_oracle_processes.py, /usr/lib/nagios/plugins/check_oracle_tablespace_usage.py, /usr/lib/nagios/plugins/check_oracle_alertlog.py, /usr/lib/nagios/plugins/check_oracle_logfile_size, /usr/lib/nagios/plugins/check_oracle_listener.py, /usr/lib/nagios/plugins/check_oracle_instance.py, /usr/lib/nagios/plugins/check_oracle_dbfile_rule.py, /usr/lib/nagios/plugins/check_oracle_recoveryarea.py, /usr/lib/nagios/plugins/check_oracle_archivelog_gap.py, /usr/lib/nagios/plugins/check_oracle_archive_dest_status.py, /usr/lib/nagios/plugins/check_oracle_standby_lagtime.py, /usr/lib/nagios/plugins/check_oracle_service.py, /usr/lib/nagios/plugins/check_oracle_scheduler_jobs.py, /usr/lib/nagios/plugins/check_mig_app_log, /usr/lib/nagios/plugins/check_oracle_monitoring.py, /usr/lib/nagios/plugins/check_unknown_databases.py, /usr/lib/nagios/plugins/check_oracle_session_cursors.py, /usr/lib/nagios/plugins/check_oracle_blocking_sessions.py, /usr/lib/nagios/plugins/check_oracle_tempfile.py, /usr/lib/nagios/plugins/check_oracle_restore_point.py
+
+Cmnd_Alias	GOLDENGATE= /usr/lib/nagios/plugins/check_ggs_process, /usr/lib/nagios/plugins/check_ggs_sync
+
+Cmnd_Alias	GRID= /usr/lib/nagios/plugins/check_asm_instance.py, /usr/lib/nagios/plugins/check_asm_space.py, /usr/lib/nagios/plugins/check_asm_disk.py, /usr/lib/nagios/plugins/check_asm_alertlog.py, /usr/lib/nagios/plugins/check_asm_logfile_size, /usr/lib/nagios/plugins/check_oracle_crs.py, /usr/lib/nagios/plugins/check_oracle_voting.py
+
+nrpe		ALL=(ggs) NOPASSWD: GOLDENGATE, (grid) NOPASSWD: GRID, (oracle) NOPASSWD: DATABASE
+
+
+grid		ALL=(ALL)	 NOPASSWD: ALL

@@ -1,0 +1,71 @@
+#!/usr/bin/perl -w
+# 
+# jyoon 11/17/2010 - Created
+#
+use strict;
+use lib '/home/app/grid/admin/DBA/lib';
+
+use Getopt::Std;
+use Db::CONFIG;
+use Db::DATABASE;
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+main();
+
+sub main {
+    my $failed = "";
+    my $online = "";
+
+    getopts('d:');
+
+    if ( !defined $opt_d ) {
+        print "ASM Disk status check plugin.\n\n" .
+              "This script check the status of ASM Disk(s).\n\n" .
+              "Usage : check_asm_disk -d +ASM\n\n";
+
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    $_ = check_asm_disk ( $opt_d );   
+    @_ = split( '\n' , $_ );
+  
+    foreach ( @_ ) {
+        if ( $_ !~ /^$/ ) {
+            my ( $dg , $offline ) = split ( ' ' , $_ );
+            if ( $offline > 0 ) {
+                $failed .= $dg . '(' . $offline . ' failed disk(s)),';
+            } else {
+                $online .= $dg . '(' . $offline . ' failed disk(s)),';
+            }
+        }
+    }
+
+
+    my $mesg = $failed . $online;
+    $mesg =~ s/,$//g;
+    $mesg =~s/^(,)*//g;
+    print $mesg;
+
+    if ( $failed !~ /^$/ ) {
+        exit $ERRORS{'CRITICAL'};
+    }
+    exit $ERRORS{'OK'};
+}
+
+
+sub check_asm_disk {
+    my ($database) =  @_;
+    my $config = new Db::CONFIG ( $database );
+    my $dh = new Db::DATABASE( $database );
+    $_     = $dh->runSQL2 ( "/home/app/grid/admin/DBA/scripts/nagios/sql/asm_disk_health.sql" );
+
+    return $_;
+}
+
+

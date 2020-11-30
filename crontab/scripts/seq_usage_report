@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+# 
+# sequence_usage_report
+#
+# Produce a Weekly Sequence usage Report
+#
+#
+#
+use strict;
+
+use lib '/home/app/oracle/admin/DBA/lib';
+use DBI;
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+my $html = '';
+
+
+main();
+
+sub main {
+    seq_usage_report();
+}
+
+
+sub seq_usage_report {
+
+    my @databases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @databases ) {
+  
+	my $config = new Db::CONFIG   ( $dbname );
+
+	if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing 
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh = new Db::DATABASE( $dbname );
+       
+        $_ = $dh->runSQL2( "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/seq_usage_report.sql" );
+
+
+	$html  = "<FONT SIZE=\"2\" FACE=\"Arial\">\n" .
+            	 "<H3>Sequence Usage Report for Whintey User</H3>\n" .
+            	 "<LI><B>Database : $dbname</B>\n" .
+                 "<br>\n" .
+            	 "<FONT FACE=\"Arial\" SIZE=\"2\">\n" .
+            	 "<TABLE BORDER=1 CELLPADDING=5>\n" .
+                 "<TR>\n" .
+             	 "<TD BGCOLOR=\"#6699FF\"><FONT FACE=\"Arial\" SIZE=\"3\"><B>SEQUENCE_NAME</B></FONT></TD>\n" .
+            	 "<TD BGCOLOR=\"#66FFFF\"><FONT FACE=\"Arial\" SIZE=\"3\"><B>MAX_USAGE</B></FONT></TD>\n" .
+            	 "</TR>\n";
+ 
+        $html .= $_;
+
+	SendReport( $dbname );	
+    }
+}
+
+sub SendReport {
+
+        my $dbname = shift;
+	my $subject = "Weekly Sequence Usage Report( $dbname ) - " . Util::UTIL::getDateStr() . ' ) ';
+
+	# The email recepient must include tradeops when it is deployed on the production.
+	Util::UTIL::SendAlert ( 'HTML' , 'DBA' , $subject , $html );
+
+}
+

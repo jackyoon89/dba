@@ -1,0 +1,68 @@
+#!/usr/bin/env perl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+
+main();
+
+
+sub main {
+    SendAccountStatus();
+
+}
+
+# -------------------------------------------------------------------------------
+# Name   : SendAccountStatus
+# Purpose: Get users on the database for us to review account status
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub SendAccountStatus {
+
+    my $payload = '';
+    my $subject = '';
+
+    my @databases = Db::CONFIG::getDbList();
+
+
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $mesg = '<TABLE BORDER=1 CELLPADDING=5>
+                    <TR><TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>USER_ID</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>USERNAME</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>ACCOUNT_STATUS</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>LOCK_DATE</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>EXPIRY_DATE</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>DEFAULT_TABLESPACE</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>TEMPORARY_TABLESPACE</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>CREATED</B></FONT></TD>
+                        <TD ALIGN="LEFT" BGCOLOR="#CCCC99"><FONT FACE="Arial" SIZE="2"><B>PROFILE</B></FONT></TD></TR>';
+
+        my $config = new Db::CONFIG   ( $dbname );
+
+        if ( $config->isStandby() =~ /yes/i || $config->isAsm() =~ /yes/i ) {   # Do nothing
+            next;                                                               # if it's Standby or ASM
+        }
+
+
+        my $dh     = new Db::DATABASE ( $dbname );
+
+        # 2010/03/22 - Consolidate individual functions calls.
+        #$mesg .= $dh->getUsers();
+        @_     = $dh->runSQL1( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/db_user_list.sql" , "(\\S)+" );
+        $mesg .= $_[1];
+        $mesg .= "\n</TABLE>";
+        $subject = "Database Accounts Information ( ";
+        #$subject .= $config->getOraSid() . " ) - " . Util::UTIL::getDateStr();
+        $subject .= $dbname . " ) - " . Util::UTIL::getDateStr();
+
+        Util::UTIL::SendAlert ( 'HTML', 'COMPLIANCE' , $subject , $mesg);
+
+    }
+}

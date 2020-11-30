@@ -1,0 +1,15 @@
+rem 
+rem table that hold user login information
+rem 
+
+DROP TABLE SYSTEM.AUDIT_USER_LOGIN
+/
+
+
+CREATE TABLE SYSTEM.AUDIT_USER_LOGIN  (
+USERNAME VARCHAR2(30),
+LOGIN_TIME  DATE
+)
+TABLESPACE USERS
+/
+

@@ -1,0 +1,21 @@
+
+run {
+   backup as compressed backupset database plus archivelog skip inaccessible not backed up tag 'DB_TAG_NAME';
+
+   sql "alter system archive log current";
+
+   backup current controlfile tag 'CTRL_TAG_NAME';
+
+   delete archivelog until time 'sysdate -1';
+}
+
+crosscheck backupset;
+crosscheck archivelog all;
+crosscheck copy;
+
+delete noprompt expired copy;
+delete noprompt expired backupset;
+delete noprompt expired archivelog all;
+delete noprompt obsolete;
+
+list backupset;

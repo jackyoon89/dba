@@ -1,0 +1,25 @@
+# Global options
+
+su oracle oinstall
+rotate 6
+daily
+notifempty
+copytruncate
+missingok
+
+/home/app/oracle/diag/rdbms/*/*/trace/*.log {
+    prerotate
+         `find /home/app/oracle/admin/* -ctime +3 -regex ".*\(.trm\|.trc\|.aud\)" -exec rm -rf {} \;`
+         `find /home/app/oracle/product/*/*/rdbms/log -regex ".*\(.trm\|.trc\|.aud\)" -exec rm -rf {} \;`
+         `find /home/app/oracle/diag/*/*/*/ -ctime +3 -regex ".*\(.trm\|.trc\|.xml\|.aud\)" -exec rm -rf {} \;`
+         `rm -f /home/app/oracle/admin/DBA/crontab/scripts/log/*log 2>/dev/null`
+    endscript
+}
+
+/home/app/grid/grid_base/diag/*/*/*/trace/*.log {
+    prerotate
+         `find /home/app/grid/grid_base/*/ -ctime +3 -regex ".*\(.trm\|.trc\|.xml\|.aud|.txt\)" -exec rm -rf {} \;`
+         `find /home/app/grid/product/*/rdbms/audit/ -ctime +3 -regex ".*\(.trm\|.trc\|.xml\|.aud|.txt\)" -exec rm -rf {} \;`
+         `rm -f /home/app/grid/admin/DBA/crontab/scripts/log/*log 2>/dev/null`
+    endscript
+}

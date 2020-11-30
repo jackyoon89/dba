@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+#
+# jyoon 11/17/2010 - Created
+
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+use vars qw ( $opt_d );
+
+my %ERRORS = ('UNKNOWN' , '-1',
+              'OK' , '0',
+              'WARNING', '1',
+              'CRITICAL', '2');
+
+my $message = "";
+
+
+foreach my $dbname ( Db::CONFIG::getDbList() ) {
+
+    my $status = Util::UTIL::isMonitor( $dbname );
+    
+    $message .=  "$dbname($status) ";
+
+}
+
+
+if ( $message =~ /^$/ ) {
+    print "No database is running on this server.";
+    exit $ERRORS{'OK'};
+} else {
+    print $message;
+}
+
+exit $ERRORS{'CRITICAL'} if ( $message =~ /NO/i );
+
+exit $ERRORS{'OK'};
+
+

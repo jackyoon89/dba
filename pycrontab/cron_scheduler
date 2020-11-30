@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import os
+import re
+import subprocess
+import socket
+
+import getopt
+import sys
+
+sys.path.append('{0}/../pylib'.format(os.path.dirname(os.path.realpath(__file__))))
+
+from utility.util    import Monitor
+from database.database import Config
+
+def arrange_jobs(schedule):
+    schedule_dir = os.path.dirname(os.path.realpath(__file__)) + "/" + schedule
+
+    files = [ f for f in os.listdir(schedule_dir) if os.path.isfile(os.path.join(schedule_dir, f))]
+
+    # Sort filenames
+    files.sort()
+
+    for f in files:
+        file_2_run = schedule_dir + "/" + f
+        os.chdir(schedule_dir)
+        os.system(file_2_run)
+
+
+if __name__ == "__main__":
+
+    argv = sys.argv[1:]
+
+    try:
+        opts, args = getopt.getopt(argv, '',  ['help','schedule='])
+        schedule = opts[0][1]
+
+    except:
+        print("\nUsage: cron_scheduler.py --schedule [5m|10m|30m|1h|6h|1w|1mon]\n")
+        sys.exit(2)
+
+    arrange_jobs(schedule)

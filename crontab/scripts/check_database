@@ -1,0 +1,66 @@
+#!/usr/bin/perl -w
+# 
+# check_database
+#
+# Jack Yoon    2011/06/25    Re-Written from old mon5m.pl
+#
+use strict;
+use lib '/home/app/oracle/admin/DBA/lib';
+
+use Util::UTIL;
+use Db::CONFIG;
+use Db::DATABASE;
+
+my %STATUS = ( 'FAILED',  0,
+               'SUCCEED', 1 );
+
+
+main();
+
+sub main {
+    MonitorDBs();
+}
+
+
+# -------------------------------------------------------------------------------
+# Name   : MonitorDBs
+# Purpose: Arrange Databases to be monitored
+# Return : N/A
+# -------------------------------------------------------------------------------
+sub MonitorDBs {
+    my @databases = ();
+    my ( $error_code , $error_mesg ) = ('','');
+    
+    my $sid = '';
+    my $subject  = '';
+
+    @databases = Db::CONFIG::getDbList();
+
+    foreach my $dbname ( @databases ) {
+
+        next if (Util::UTIL::isMonitor( $dbname ) =~ /NO/i);
+
+        my $config = new Db::CONFIG( $dbname );
+        #next if ($config->getDbType() =~ 'container');
+        next if ($config->isStandby() =~ /yes/i);
+        
+        my $dh = Db::DATABASE->new( $dbname );
+
+
+        # 2010/03/22 - jyoon
+        # Merged individual sub functions into one common function.
+        #  
+        #( $error_code , $error_mesg ) = $dh->getDbStatus();
+
+        ( $error_code , $error_mesg ) = $dh->runSQL1( $config->getSysUser(), "$ENV{ORACLE_BASE}/admin/DBA/crontab/scripts/sql/dual.sql", "\\s+X\\s+" );
+
+        if ( $error_code == $STATUS {'FAILED'} ) {
+            $subject  = $ENV{ORACLE_SID} . "(" . $dbname . ")";
+            $subject .= " Databases Down!. - ";
+            $subject .= Util::UTIL::getDateStr();
+            
+            Util::UTIL::SendAlert ('TEXT', 'DBA', $subject , $error_mesg);
+        } 
+            
+   }
+}

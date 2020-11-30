@@ -1,0 +1,28 @@
+# Global options
+
+rotate 3
+weekly
+notifempty
+copytruncate
+missingok
+
+/home/app/oracle/admin/*/*/*log {
+    prerotate
+         `find /home/app/oracle/admin/*/* -regex ".*\(.trm\|.trc$\|.xml\|.aud\)" -exec rm -rf {} \;`
+    endscript
+}
+
+/home/app/oracle/diag/rdbms/*/*/trace/alert*.log 
+/home/app/oracle/admin/DBA/crontab/scripts/log/cron_scheduler.log {
+    prerotate
+         `find /home/app/oracle/diag/rdbms/*/*/ -regex ".*\(.trm\|.trc$\|.xml\|.aud\)" -exec rm -rf {} \;`
+    endscript
+}
+
+/home/app/grid/grid_base/diag/*/*/*/trace/alert*.log 
+/home/app/grid/admin/DBA/crontab/scripts/log/cron_scheduler.log {
+    prerotate
+         `find /home/app/grid/grid_base/diag/*/*/*/ -regex ".*\(.trm\|.trc$\|.xml\|.aud\)" -exec rm -rf {} \;`
+         `find /home/app/grid/grid_base/*/*/*/*/*/ -regex ".*\(.trm\|.trc$\|.xml\|.aud|.txt\)" -exec rm -rf {} \;`
+    endscript
+}
